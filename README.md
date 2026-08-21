@@ -8,7 +8,7 @@ sdk_version: 5.14.0
 app_file: app.py
 pinned: false
 license: mit
-short_description: Real-time calibrated transaction fraud, merchant incident detection & ZeroGPU SLM explanations.
+short_description: Real-time fraud detection & ZeroGPU SLM explanations.
 ---
 
 # RazorShield — AI-Powered Merchant Fraud & Risk Intelligence
