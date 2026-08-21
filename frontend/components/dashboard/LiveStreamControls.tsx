@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import { Play, Square, Loader2, Radio } from "lucide-react";
 import { analyzeTransaction } from "@/lib/api";
 import { AnalyzeTransactionResponse } from "@/lib/types";
+import { formatFixed, formatPercent } from "@/lib/utils";
 
 interface StreamItem {
   id: string;
@@ -125,11 +126,11 @@ export default function LiveStreamControls({ onTransactionAnalyzed }: Props) {
                 <div className="flex items-center space-x-3">
                   <span className="text-brand-muted">{item.timestamp}</span>
                   <span className="text-white font-semibold">{item.txId}</span>
-                  <span className="text-brand-muted">${item.amount.toFixed(2)}</span>
+                  <span className="text-brand-muted">${formatFixed(item.amount, 2)}</span>
                 </div>
 
                 <div className="flex items-center space-x-3">
-                  <span className="text-brand-muted">P(fraud): {(item.fraudProb * 100).toFixed(1)}%</span>
+                  <span className="text-brand-muted">P(fraud): {formatPercent(item.fraudProb)}</span>
                   <span
                     className={`font-bold uppercase px-2 py-0.5 border ${
                       item.action === "ALERT"

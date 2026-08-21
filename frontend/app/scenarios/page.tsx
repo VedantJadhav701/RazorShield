@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { runScenarioReplay } from "@/lib/api";
 import { ScenarioReplayResult } from "@/lib/types";
+import { formatFixed } from "@/lib/utils";
 import { Play, Loader2, CheckCircle2, AlertTriangle, ShieldAlert, Cpu, Radio, ShieldCheck } from "lucide-react";
 
 export default function ScenariosPage() {
@@ -202,7 +203,7 @@ export default function ScenariosPage() {
 
                 <div className="bg-brand-dark border border-brand-border/60 p-4">
                   <span className="text-brand-muted block mb-1">Engine Processing Time:</span>
-                  <span className="text-white text-xl font-bold">{result.replay_time_ms.toFixed(1)} ms</span>
+                  <span className="text-white text-xl font-bold">{formatFixed(result.replay_time_ms, 1)} ms</span>
                 </div>
 
                 <div className="bg-brand-dark border border-brand-border/60 p-4">

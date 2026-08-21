@@ -16,6 +16,7 @@ import RiskOverviewCard from "@/components/dashboard/RiskOverviewCard";
 import EvidenceGrid from "@/components/dashboard/EvidenceGrid";
 import SLMExplanationCard from "@/components/dashboard/SLMExplanationCard";
 import TransactionForm from "@/components/dashboard/TransactionForm";
+import SLMChatDrawer from "@/components/dashboard/SLMChatDrawer";
 
 export default function DashboardPage() {
   const [analysisData, setAnalysisData] = useState<AnalyzeTransactionResponse | null>(null);
@@ -184,6 +185,9 @@ export default function DashboardPage() {
         {/* System Activity Trace Log */}
         <SystemActivityLog logs={logs} />
       </div>
+
+      {/* Side SLM Chat Co-Pilot Drawer */}
+      <SLMChatDrawer data={analysisData} />
     </div>
   );
 }
