@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CheckCircle2, AlertTriangle, ShieldAlert, Cpu } from "lucide-react";
+import { CheckCircle2, AlertTriangle, ShieldAlert, Radio } from "lucide-react";
 import { AnalyzeTransactionResponse } from "@/lib/types";
 
 interface Props {
@@ -11,8 +11,14 @@ interface Props {
 export default function RiskOverviewCard({ data }: Props) {
   if (!data) {
     return (
-      <div className="bg-brand-card border border-brand-border p-6 font-mono text-xs text-brand-muted">
-        No transaction analyzed yet. Submit a transaction or run a scenario replay.
+      <div className="bg-brand-black border border-brand-border p-8 font-mono text-xs text-center space-y-3">
+        <div className="flex items-center justify-center space-x-2 text-brand-muted uppercase font-bold">
+          <Radio className="w-4 h-4 text-brand-muted" />
+          <span>NO TRANSACTION ANALYZED</span>
+        </div>
+        <p className="text-brand-muted text-[11px] max-w-md mx-auto">
+          Submit a transaction payload using the form or start the live demo stream to evaluate real-time merchant incident risk.
+        </p>
       </div>
     );
   }
@@ -31,19 +37,22 @@ export default function RiskOverviewCard({ data }: Props) {
     : "bg-emerald-400/10 border-emerald-400/40 text-emerald-400";
 
   const Icon = isAlert ? ShieldAlert : isVerify ? AlertTriangle : CheckCircle2;
+  const meta = data.meta;
 
   return (
-    <div className="bg-brand-black border border-brand-border p-6 flex flex-col justify-between">
-      <div className="flex items-center justify-between border-b border-brand-border/60 pb-4 mb-6">
-        <div className="flex items-center space-x-2 font-mono text-xs text-brand-muted">
-          <span>MERCHANT INCIDENT STATE</span>
+    <div className="bg-brand-black border border-brand-border p-6 flex flex-col justify-between space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-brand-border/60 pb-4 gap-2 font-mono text-xs">
+        <div className="flex items-center space-x-2 text-brand-muted">
+          <span>MERCHANT: <strong className="text-white">{data.merchant_id}</strong></span>
+          <span>|</span>
+          <span>TX: <strong className="text-white">{data.transaction_id}</strong></span>
         </div>
-        <span className="font-mono text-xs text-brand-muted">
+        <span className="text-brand-muted">
           Policy Mode: <span className="text-white font-semibold">{data.decision.policy_mode}</span>
         </span>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="font-mono text-xs text-brand-muted uppercase mb-1">
             Primary Decision State
@@ -59,11 +68,35 @@ export default function RiskOverviewCard({ data }: Props) {
         </div>
       </div>
 
-      <div className="bg-brand-dark border border-brand-border/60 p-4 font-mono text-xs text-brand-muted flex items-center justify-between">
-        <span>Decision Source:</span>
-        <span className="text-white font-bold tracking-wider">
-          DETERMINISTIC RISK ENGINE
-        </span>
+      {/* Decision Authority & Provenance */}
+      <div className="bg-brand-dark border border-brand-border/60 p-4 font-mono text-xs space-y-2">
+        <div className="flex items-center justify-between text-brand-muted">
+          <span>Decision Authority:</span>
+          <span className="text-white font-bold tracking-wider">
+            DETERMINISTIC RISK ENGINE
+          </span>
+        </div>
+
+        {meta && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-brand-border/40 text-[10px] text-brand-muted">
+            <div>
+              <span>REQUEST ID: </span>
+              <span className="text-white">{meta.request_id}</span>
+            </div>
+            <div>
+              <span>PROVENANCE: </span>
+              <span className="text-emerald-400">{meta.data_source}</span>
+            </div>
+            <div>
+              <span>UPDATED: </span>
+              <span className="text-white">{new Date(meta.response_received_at).toLocaleTimeString()}</span>
+            </div>
+            <div>
+              <span>ROUNDTRIP: </span>
+              <span className="text-emerald-400">{meta.roundtrip_latency_ms} ms</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -7,7 +7,9 @@
 import { Client } from "@gradio/client";
 import {
   AnalyzeTransactionResponse,
+  BackendHealthStatus,
   MerchantStateQueryResponse,
+  ResponseMetadata,
   ScenarioReplayResult,
   TransactionApiInput,
 } from "./types";
@@ -17,15 +19,71 @@ const DEFAULT_URL = process.env.NEXT_PUBLIC_API_URL || `https://${SPACE_NAME.rep
 
 let gradioClient: Client | null = null;
 
+function generateRequestId(): string {
+  return `REQ_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+}
+
 async function getClient(): Promise<Client | null> {
   if (gradioClient) return gradioClient;
   try {
     gradioClient = await Client.connect(SPACE_NAME);
     return gradioClient;
   } catch (err) {
-    console.warn("Gradio Client connection warning. Using HTTP API fallback:", err);
+    console.warn("Gradio Client connection warning. Falling back to direct HTTP fetch:", err);
     return null;
   }
+}
+
+/**
+ * Real Backend Health Check Handshake
+ */
+export async function checkBackendHealth(): Promise<BackendHealthStatus> {
+  const start = performance.now();
+  const sentAt = new Date().toISOString();
+  try {
+    const client = await getClient();
+    if (client) {
+      // Test prediction on analyze_merchant
+      await client.predict("analyze_merchant", ["M_HEALTH_CHECK"]);
+      const latency = Math.round(performance.now() - start);
+      return {
+        status: "CONNECTED",
+        endpoint: DEFAULT_URL,
+        last_sync_at: new Date().toISOString(),
+        roundtrip_latency_ms: latency,
+      };
+    }
+  } catch (err) {
+    console.warn("Gradio health check error:", err);
+  }
+
+  // HTTP endpoint fallback check
+  try {
+    const res = await fetch(`${DEFAULT_URL}/api/predict/analyze_merchant`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: ["M_HEALTH_CHECK"] }),
+    });
+    const latency = Math.round(performance.now() - start);
+    if (res.ok) {
+      return {
+        status: "CONNECTED",
+        endpoint: DEFAULT_URL,
+        last_sync_at: new Date().toISOString(),
+        roundtrip_latency_ms: latency,
+      };
+    }
+  } catch (err) {
+    console.error("HTTP health check failed:", err);
+  }
+
+  return {
+    status: "OFFLINE",
+    endpoint: DEFAULT_URL,
+    last_sync_at: sentAt,
+    roundtrip_latency_ms: null,
+    error: "Hugging Face Space unreachable",
+  };
 }
 
 /**
@@ -34,7 +92,9 @@ async function getClient(): Promise<Client | null> {
 export async function analyzeTransaction(
   input: TransactionApiInput
 ): Promise<AnalyzeTransactionResponse> {
-  const client = await getClient();
+  const reqId = generateRequestId();
+  const sentAt = new Date().toISOString();
+  const start = performance.now();
 
   const mId = input.merchant_id || "M_101";
   const txId = input.transaction_id || `TX_${Date.now().toString().slice(-6)}`;
@@ -45,6 +105,8 @@ export async function analyzeTransaction(
   const pm = input.payment_method || "card";
   const tt = input.transaction_type || "sale";
   const policyMode = input.policy_mode || "BALANCED";
+
+  const client = await getClient();
 
   if (client) {
     try {
@@ -59,8 +121,17 @@ export async function analyzeTransaction(
         tt,
         policyMode,
       ]);
+      const roundtrip = Math.round(performance.now() - start);
       const dataStr = Array.isArray(res.data) ? (res.data[0] as string) : String(res.data);
-      return JSON.parse(dataStr);
+      const parsed: AnalyzeTransactionResponse = JSON.parse(dataStr);
+      parsed.meta = {
+        request_id: reqId,
+        request_sent_at: sentAt,
+        response_received_at: new Date().toISOString(),
+        roundtrip_latency_ms: roundtrip,
+        data_source: "LIVE HUGGING FACE BACKEND",
+      };
+      return parsed;
     } catch (err) {
       console.error("Gradio predict error for analyze_transaction:", err);
     }
@@ -75,16 +146,26 @@ export async function analyzeTransaction(
         data: [mId, txId, custId, devId, eventTime, amount, pm, tt, policyMode],
       }),
     });
+    const roundtrip = Math.round(performance.now() - start);
     if (httpRes.ok) {
       const json = await httpRes.json();
       const rawText = Array.isArray(json.data) ? json.data[0] : json.data;
-      return JSON.parse(rawText);
+      const parsed: AnalyzeTransactionResponse = JSON.parse(rawText);
+      parsed.meta = {
+        request_id: reqId,
+        request_sent_at: sentAt,
+        response_received_at: new Date().toISOString(),
+        roundtrip_latency_ms: roundtrip,
+        data_source: "LIVE HUGGING FACE BACKEND",
+      };
+      return parsed;
     }
   } catch (httpErr) {
     console.warn("Direct HTTP endpoint unavailable:", httpErr);
   }
 
   // Deterministic Client Fallback
+  const roundtrip = Math.round(performance.now() - start);
   return {
     transaction_id: txId,
     merchant_id: mId,
@@ -118,6 +199,13 @@ export async function analyzeTransaction(
       slm_latency_ms: 0.0,
       total_latency_ms: 0.62,
     },
+    meta: {
+      request_id: reqId,
+      request_sent_at: sentAt,
+      response_received_at: new Date().toISOString(),
+      roundtrip_latency_ms: roundtrip,
+      data_source: "CLIENT FALLBACK",
+    },
   };
 }
 
@@ -128,19 +216,33 @@ export async function runScenarioReplay(
   scenarioName: string,
   policyMode: string = "BALANCED"
 ): Promise<ScenarioReplayResult> {
+  const reqId = generateRequestId();
+  const sentAt = new Date().toISOString();
+  const start = performance.now();
+
   const client = await getClient();
 
   if (client) {
     try {
       const res = await client.predict("run_scenario", [scenarioName, policyMode]);
+      const roundtrip = Math.round(performance.now() - start);
       const dataStr = Array.isArray(res.data) ? (res.data[0] as string) : String(res.data);
-      return JSON.parse(dataStr);
+      const parsed: ScenarioReplayResult = JSON.parse(dataStr);
+      parsed.meta = {
+        request_id: reqId,
+        request_sent_at: sentAt,
+        response_received_at: new Date().toISOString(),
+        roundtrip_latency_ms: roundtrip,
+        data_source: "LIVE HUGGING FACE BACKEND",
+      };
+      return parsed;
     } catch (err) {
       console.error("Gradio predict error for run_scenario:", err);
     }
   }
 
   // Deterministic Fallback Replay Data
+  const roundtrip = Math.round(performance.now() - start);
   const isAlert = scenarioName.includes("FRAUD");
   return {
     scenario_name: scenarioName,
@@ -170,6 +272,13 @@ export async function runScenarioReplay(
       recommended_action: isAlert ? "Initiate merchant review & verification." : "Maintain standard processing.",
       confidence_note: "Deterministic scenario replay result.",
     },
+    meta: {
+      request_id: reqId,
+      request_sent_at: sentAt,
+      response_received_at: new Date().toISOString(),
+      roundtrip_latency_ms: roundtrip,
+      data_source: "CLIENT FALLBACK",
+    },
   };
 }
 
@@ -177,18 +286,32 @@ export async function runScenarioReplay(
  * Queries live merchant temporal state.
  */
 export async function queryMerchantState(merchantId: string): Promise<MerchantStateQueryResponse> {
+  const reqId = generateRequestId();
+  const sentAt = new Date().toISOString();
+  const start = performance.now();
+
   const client = await getClient();
 
   if (client) {
     try {
       const res = await client.predict("analyze_merchant", [merchantId]);
+      const roundtrip = Math.round(performance.now() - start);
       const dataStr = Array.isArray(res.data) ? (res.data[0] as string) : String(res.data);
-      return JSON.parse(dataStr);
+      const parsed: MerchantStateQueryResponse = JSON.parse(dataStr);
+      parsed.meta = {
+        request_id: reqId,
+        request_sent_at: sentAt,
+        response_received_at: new Date().toISOString(),
+        roundtrip_latency_ms: roundtrip,
+        data_source: "LIVE HUGGING FACE BACKEND",
+      };
+      return parsed;
     } catch (err) {
       console.error("Gradio predict error for analyze_merchant:", err);
     }
   }
 
+  const roundtrip = Math.round(performance.now() - start);
   return {
     merchant_id: merchantId,
     rolling_window: {
@@ -208,22 +331,53 @@ export async function queryMerchantState(merchantId: string): Promise<MerchantSt
       consecutive_suspicious_windows: 0,
       campaign_active: false,
     },
+    meta: {
+      request_id: reqId,
+      request_sent_at: sentAt,
+      response_received_at: new Date().toISOString(),
+      roundtrip_latency_ms: roundtrip,
+      data_source: "CLIENT FALLBACK",
+    },
   };
 }
 
 /**
  * Resets all demo merchant states.
  */
-export async function resetDemoState(): Promise<{ status: string; message: string }> {
+export async function resetDemoState(): Promise<{ status: string; message: string; meta?: ResponseMetadata }> {
+  const reqId = generateRequestId();
+  const sentAt = new Date().toISOString();
+  const start = performance.now();
+
   const client = await getClient();
   if (client) {
     try {
       const res = await client.predict("reset_demo_state", []);
+      const roundtrip = Math.round(performance.now() - start);
       const dataStr = Array.isArray(res.data) ? (res.data[0] as string) : String(res.data);
-      return JSON.parse(dataStr);
+      const parsed = JSON.parse(dataStr);
+      parsed.meta = {
+        request_id: reqId,
+        request_sent_at: sentAt,
+        response_received_at: new Date().toISOString(),
+        roundtrip_latency_ms: roundtrip,
+        data_source: "LIVE HUGGING FACE BACKEND",
+      };
+      return parsed;
     } catch (err) {
       console.error("Gradio predict error for reset_demo_state:", err);
     }
   }
-  return { status: "SUCCESS", message: "Demo state reset completed." };
+  const roundtrip = Math.round(performance.now() - start);
+  return {
+    status: "SUCCESS",
+    message: "Demo state reset completed.",
+    meta: {
+      request_id: reqId,
+      request_sent_at: sentAt,
+      response_received_at: new Date().toISOString(),
+      roundtrip_latency_ms: roundtrip,
+      data_source: "CLIENT FALLBACK",
+    },
+  };
 }

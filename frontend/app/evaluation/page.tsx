@@ -47,9 +47,14 @@ export default function EvaluationPage() {
               Verified Measured Benchmark Results
             </h1>
           </div>
-          <span className="font-mono text-xs text-brand-muted border border-brand-border px-3 py-1 mt-4 sm:mt-0">
-            Empirical Test-Set Metrics Only • No Fabricated Claims
-          </span>
+          <div className="flex flex-col items-end space-y-1 mt-4 sm:mt-0">
+            <span className="font-mono text-xs text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-bold">
+              EMPIRICAL BENCHMARKS — OFFLINE HELD-OUT TEST SET
+            </span>
+            <span className="font-mono text-[10px] text-brand-muted">
+              (NOT LIVE PRODUCTION METRICS)
+            </span>
+          </div>
         </div>
 
         {/* Section 1: Dataset A Transaction Model */}
