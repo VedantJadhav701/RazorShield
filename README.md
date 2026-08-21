@@ -17,6 +17,25 @@ RazorShield is an enterprise-grade, multi-layered merchant fraud detection and r
 
 ---
 
+## 🌐 Live System Endpoints
+
+- **Live Next.js Frontend (Vercel)**: [https://razorshield.vercel.app](https://razorshield.vercel.app)
+- **Hugging Face Space Backend**: [https://huggingface.co/spaces/vedantjadhav701/razorshield-api](https://huggingface.co/spaces/vedantjadhav701/razorshield-api)
+- **Direct API Endpoint**: `https://vedantjadhav701-razorshield-api.hf.space`
+- **GitHub Repository**: [https://github.com/VedantJadhav701/RazorShield](https://github.com/VedantJadhav701/RazorShield)
+
+---
+
+## 🎬 How to Demo (3–5 Minute Judge Walkthrough)
+
+1. **Landing Stage (`/`)**: Start on the cinematic fullscreen stage highlighting *"Fraud detection without false alarms."* Click **LAUNCH RAZORSHIELD** to enter the console.
+2. **Risk Console (`/dashboard`)**: Submit a real-time transaction to view sub-millisecond risk decisioning (`DETERMINISTIC RISK ENGINE`) alongside structured evidence and AI-generated explanations (`Qwen2.5-0.5B-Instruct`).
+3. **Hard-Negative Isolation (`/scenarios`)**: Select **FLASH SALE (VOLUME SURGE)**. Click **RUN SCENARIO REPLAY**. Observe that despite a 4.0x volume surge, fraud excess remains 1.0x, resulting in **`NORMAL`** decision (0% false alert).
+4. **Persistent Fraud Attack (`/scenarios`)**: Select **FLASH SALE WITH FRAUD ATTACK**. Click **RUN SCENARIO REPLAY**. Observe that campaign state is recognized, but persistent fraud excess triggers an authoritative **`ALERT`** after $N=2$ windows with grounded SLM explanations.
+5. **Empirical Benchmarks (`/evaluation`)**: Open the Evaluation tab to inspect verified test-set metrics (88.89% scenario recall, 0.00% flash sale false alerts, 100% SLM grounding).
+
+---
+
 ## 🏗️ System Architecture
 
 ```
@@ -76,7 +95,7 @@ CPU handles request validation, XGBoost inference, rolling merchant state, incid
 
 ## 🔌 Public API Endpoints
 
-The backend exposes Gradio API endpoints for external frontend integration (e.g. Vercel Next.js):
+The backend exposes Gradio API endpoints for external frontend integration:
 
 - `analyze_transaction`: Real-time transaction fraud & merchant incident risk assessment
 - `analyze_merchant`: Query live merchant temporal rolling state & active campaign info
@@ -84,4 +103,4 @@ The backend exposes Gradio API endpoints for external frontend integration (e.g.
 - `explain_evidence`: Direct structured evidence to zero-shot SLM explanation conversion
 - `reset_demo_state`: Reset all merchant temporal state, incident counters, & campaigns
 
-For full documentation, see [docs/API_CONTRACT.md](file:///C:/Users/HP/projects/RazorShield/docs/API_CONTRACT.md).
+For full documentation, see [docs/API_CONTRACT.md](docs/API_CONTRACT.md).

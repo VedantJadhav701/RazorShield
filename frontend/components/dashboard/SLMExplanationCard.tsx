@@ -6,9 +6,22 @@ import { AnalyzeTransactionResponse } from "@/lib/types";
 
 interface Props {
   data: AnalyzeTransactionResponse | null;
+  isLoading?: boolean;
 }
 
-export default function SLMExplanationCard({ data }: Props) {
+export default function SLMExplanationCard({ data, isLoading }: Props) {
+  if (isLoading) {
+    return (
+      <div className="bg-brand-black border border-brand-border p-6 flex items-center justify-between font-mono text-xs text-brand-muted">
+        <div className="flex items-center space-x-3">
+          <div className="w-2 h-2 rounded-full bg-brand-red animate-ping" />
+          <span>Generating evidence explanation (ZeroGPU dynamic allocation)...</span>
+        </div>
+        <span className="text-[11px] text-brand-muted">Model: Qwen2.5-0.5B-Instruct</span>
+      </div>
+    );
+  }
+
   if (!data) return null;
 
   const exp = data.explanation;

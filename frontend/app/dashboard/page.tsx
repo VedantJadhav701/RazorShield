@@ -117,7 +117,7 @@ export default function DashboardPage() {
         </div>
 
         {/* SLM Explanation Card */}
-        <SLMExplanationCard data={analysisData} />
+        <SLMExplanationCard data={analysisData} isLoading={isLoading} />
       </div>
     </div>
   );
