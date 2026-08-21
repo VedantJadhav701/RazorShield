@@ -1,10 +1,10 @@
 /**
  * api.ts
- * Hugging Face Gradio Space API Integration Layer.
- * Communicates with backend Space: vedantjadhav701/razorshield-api
+ * Browser-Side API Client.
+ * Communicates ONLY with same-origin Next.js Server Route Handlers (/api/...).
+ * The browser never connects directly to Hugging Face Spaces.
  */
 
-import { Client } from "@gradio/client";
 import {
   AnalyzeTransactionResponse,
   BackendHealthStatus,
@@ -14,80 +14,42 @@ import {
   TransactionApiInput,
 } from "./types";
 
-const SPACE_NAME = "vedantjadhav701/razorshield-api";
-const DEFAULT_URL = process.env.NEXT_PUBLIC_API_URL || `https://${SPACE_NAME.replace("/", "-")}.hf.space`;
-
-let gradioClient: Client | null = null;
-
 function generateRequestId(): string {
   return `REQ_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 }
 
-async function getClient(): Promise<Client | null> {
-  if (gradioClient) return gradioClient;
-  try {
-    gradioClient = await Client.connect(SPACE_NAME);
-    return gradioClient;
-  } catch (err) {
-    console.warn("Gradio Client connection warning. Falling back to direct HTTP fetch:", err);
-    return null;
-  }
-}
-
 /**
- * Real Backend Health Check Handshake
+ * Health check probe via /api/health
  */
 export async function checkBackendHealth(): Promise<BackendHealthStatus> {
   const start = performance.now();
   const sentAt = new Date().toISOString();
   try {
-    const client = await getClient();
-    if (client) {
-      // Test prediction on analyze_merchant
-      await client.predict("analyze_merchant", ["M_HEALTH_CHECK"]);
-      const latency = Math.round(performance.now() - start);
-      return {
-        status: "CONNECTED",
-        endpoint: DEFAULT_URL,
-        last_sync_at: new Date().toISOString(),
-        roundtrip_latency_ms: latency,
-      };
-    }
-  } catch (err) {
-    console.warn("Gradio health check error:", err);
-  }
-
-  // HTTP endpoint fallback check
-  try {
-    const res = await fetch(`${DEFAULT_URL}/api/predict/analyze_merchant`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: ["M_HEALTH_CHECK"] }),
-    });
+    const res = await fetch("/api/health", { cache: "no-store" });
     const latency = Math.round(performance.now() - start);
     if (res.ok) {
       return {
         status: "CONNECTED",
-        endpoint: DEFAULT_URL,
+        endpoint: "/api/health (Vercel Server Proxy)",
         last_sync_at: new Date().toISOString(),
         roundtrip_latency_ms: latency,
       };
     }
-  } catch (err) {
-    console.error("HTTP health check failed:", err);
+  } catch (err: any) {
+    console.warn("Health check error via /api/health:", err);
   }
 
   return {
     status: "OFFLINE",
-    endpoint: DEFAULT_URL,
+    endpoint: "/api/health",
     last_sync_at: sentAt,
     roundtrip_latency_ms: null,
-    error: "Hugging Face Space unreachable",
+    error: "Server-side RazorShield proxy unreachable",
   };
 }
 
 /**
- * Analyzes a single transaction payload using the deployed Hugging Face Space backend.
+ * Analyzes transaction via POST /api/transaction
  */
 export async function analyzeTransaction(
   input: TransactionApiInput
@@ -96,121 +58,33 @@ export async function analyzeTransaction(
   const sentAt = new Date().toISOString();
   const start = performance.now();
 
-  const mId = input.merchant_id || "M_101";
-  const txId = input.transaction_id || `TX_${Date.now().toString().slice(-6)}`;
-  const custId = input.customer_id || "C_1048";
-  const devId = input.device_id || "D_882";
-  const eventTime = input.event_time || new Date().toISOString();
-  const amount = input.amount || 100.0;
-  const pm = input.payment_method || "card";
-  const tt = input.transaction_type || "sale";
-  const policyMode = input.policy_mode || "BALANCED";
+  const res = await fetch("/api/transaction", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
 
-  const client = await getClient();
-
-  if (client) {
-    try {
-      const res = await client.predict("analyze_transaction", [
-        mId,
-        txId,
-        custId,
-        devId,
-        eventTime,
-        amount,
-        pm,
-        tt,
-        policyMode,
-      ]);
-      const roundtrip = Math.round(performance.now() - start);
-      const dataStr = Array.isArray(res.data) ? (res.data[0] as string) : String(res.data);
-      const parsed: AnalyzeTransactionResponse = JSON.parse(dataStr);
-      parsed.meta = {
-        request_id: reqId,
-        request_sent_at: sentAt,
-        response_received_at: new Date().toISOString(),
-        roundtrip_latency_ms: roundtrip,
-        data_source: "LIVE HUGGING FACE BACKEND",
-      };
-      return parsed;
-    } catch (err) {
-      console.error("Gradio predict error for analyze_transaction:", err);
-    }
-  }
-
-  // HTTP Direct Fallback
-  try {
-    const httpRes = await fetch(`${DEFAULT_URL}/api/predict/analyze_transaction`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        data: [mId, txId, custId, devId, eventTime, amount, pm, tt, policyMode],
-      }),
-    });
-    const roundtrip = Math.round(performance.now() - start);
-    if (httpRes.ok) {
-      const json = await httpRes.json();
-      const rawText = Array.isArray(json.data) ? json.data[0] : json.data;
-      const parsed: AnalyzeTransactionResponse = JSON.parse(rawText);
-      parsed.meta = {
-        request_id: reqId,
-        request_sent_at: sentAt,
-        response_received_at: new Date().toISOString(),
-        roundtrip_latency_ms: roundtrip,
-        data_source: "LIVE HUGGING FACE BACKEND",
-      };
-      return parsed;
-    }
-  } catch (httpErr) {
-    console.warn("Direct HTTP endpoint unavailable:", httpErr);
-  }
-
-  // Deterministic Client Fallback
   const roundtrip = Math.round(performance.now() - start);
-  return {
-    transaction_id: txId,
-    merchant_id: mId,
-    transaction_risk: { fraud_probability: 0.012 },
-    merchant_risk: {
-      spike_probability: 0.04,
-      fraud_excess_ratio: 1.0,
-      velocity_ratio: 1.0,
-      incident_state: "NORMAL",
-      severity: "LOW",
-      incident_score: 0.06,
-      suspicious_windows: 0,
-    },
-    campaign: { active: false, campaign_name: null },
-    decision: { action: "APPROVE", policy_mode: policyMode },
-    explanation: {
-      title: "RazorShield Defensive Risk Assessment: NORMAL (LOW Severity)",
-      summary: `RazorShield evaluated merchant ${mId} activity as NORMAL (LOW severity). Observed fraud excess ratio is 1.0x baseline and volume velocity is 1.0x baseline.`,
-      key_signals: [
-        "Policy Incident Score: 0.06",
-        "Fraud Excess Ratio: 1.0x baseline",
-        "Volume Velocity Ratio: 1.0x baseline",
-        "Consecutive Suspicious Windows: 0",
-      ],
-      campaign_context: `No promotional campaign is active for merchant ${mId}.`,
-      recommended_action: "Maintain standard automated processing.",
-      confidence_note: "Explanation generated via deterministic fallback.",
-    },
-    performance: {
-      risk_engine_latency_ms: 0.62,
-      slm_latency_ms: 0.0,
-      total_latency_ms: 0.62,
-    },
-    meta: {
-      request_id: reqId,
-      request_sent_at: sentAt,
-      response_received_at: new Date().toISOString(),
-      roundtrip_latency_ms: roundtrip,
-      data_source: "CLIENT FALLBACK",
-    },
+  const json = await res.json();
+
+  if (!res.ok || !json.success || !json.data) {
+    throw new Error(json?.error?.message || `Transaction analysis failed with HTTP ${res.status}`);
+  }
+
+  const parsed: AnalyzeTransactionResponse = json.data;
+  parsed.meta = {
+    request_id: reqId,
+    request_sent_at: sentAt,
+    response_received_at: new Date().toISOString(),
+    roundtrip_latency_ms: roundtrip,
+    data_source: "LIVE HUGGING FACE BACKEND",
   };
+
+  return parsed;
 }
 
 /**
- * Replays a test scenario through the Hugging Face Space backend.
+ * Replays scenario via POST /api/scenario
  */
 export async function runScenarioReplay(
   scenarioName: string,
@@ -220,164 +94,109 @@ export async function runScenarioReplay(
   const sentAt = new Date().toISOString();
   const start = performance.now();
 
-  const client = await getClient();
+  const res = await fetch("/api/scenario", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scenario_name: scenarioName, policy_mode: policyMode }),
+  });
 
-  if (client) {
-    try {
-      const res = await client.predict("run_scenario", [scenarioName, policyMode]);
-      const roundtrip = Math.round(performance.now() - start);
-      const dataStr = Array.isArray(res.data) ? (res.data[0] as string) : String(res.data);
-      const parsed: ScenarioReplayResult = JSON.parse(dataStr);
-      parsed.meta = {
-        request_id: reqId,
-        request_sent_at: sentAt,
-        response_received_at: new Date().toISOString(),
-        roundtrip_latency_ms: roundtrip,
-        data_source: "LIVE HUGGING FACE BACKEND",
-      };
-      return parsed;
-    } catch (err) {
-      console.error("Gradio predict error for run_scenario:", err);
-    }
+  const roundtrip = Math.round(performance.now() - start);
+  const json = await res.json();
+
+  if (!res.ok || !json.success || !json.data) {
+    throw new Error(json?.error?.message || `Scenario replay failed with HTTP ${res.status}`);
   }
 
-  // Deterministic Fallback Replay Data
-  const roundtrip = Math.round(performance.now() - start);
-  const isAlert = scenarioName.includes("FRAUD");
-  return {
-    scenario_name: scenarioName,
-    scenario_id: `sc_demo_${Date.now()}`,
-    merchant_id: `M_DEMO_${scenarioName}`,
-    total_transactions: 600,
-    replay_time_ms: 112.5,
-    incident_state_distribution: {
-      NORMAL: isAlert ? 570 : 600,
-      INVESTIGATE: 0,
-      ALERT: isAlert ? 30 : 0,
-    },
-    final_incident_state: isAlert ? "ALERT" : "NORMAL",
-    final_severity: isAlert ? "HIGH" : "LOW",
-    explanation: {
-      title: `RazorShield Defensive Risk Assessment: ${isAlert ? "ALERT" : "NORMAL"}`,
-      summary: isAlert
-        ? "RazorShield classified merchant activity as ALERT due to persistent fraud excess ratio surging to 2.5x baseline across monitoring windows."
-        : "RazorShield classified merchant activity as NORMAL. Volume surge is normalized with fraud excess ratio remaining 1.0x baseline.",
-      key_signals: [
-        `Incident State: ${isAlert ? "ALERT" : "NORMAL"}`,
-        `Fraud Excess Ratio: ${isAlert ? "2.5x" : "1.0x"}`,
-      ],
-      campaign_context: scenarioName.includes("FLASH")
-        ? "Promotional campaign registered. Volume velocity is normalized."
-        : "No campaign active.",
-      recommended_action: isAlert ? "Initiate merchant review & verification." : "Maintain standard processing.",
-      confidence_note: "Deterministic scenario replay result.",
-    },
-    meta: {
-      request_id: reqId,
-      request_sent_at: sentAt,
-      response_received_at: new Date().toISOString(),
-      roundtrip_latency_ms: roundtrip,
-      data_source: "CLIENT FALLBACK",
-    },
+  const parsed: ScenarioReplayResult = json.data;
+  parsed.meta = {
+    request_id: reqId,
+    request_sent_at: sentAt,
+    response_received_at: new Date().toISOString(),
+    roundtrip_latency_ms: roundtrip,
+    data_source: "LIVE HUGGING FACE BACKEND",
   };
+
+  return parsed;
 }
 
 /**
- * Queries live merchant temporal state.
+ * Queries merchant state via POST /api/merchant
  */
 export async function queryMerchantState(merchantId: string): Promise<MerchantStateQueryResponse> {
   const reqId = generateRequestId();
   const sentAt = new Date().toISOString();
   const start = performance.now();
 
-  const client = await getClient();
-
-  if (client) {
-    try {
-      const res = await client.predict("analyze_merchant", [merchantId]);
-      const roundtrip = Math.round(performance.now() - start);
-      const dataStr = Array.isArray(res.data) ? (res.data[0] as string) : String(res.data);
-      const parsed: MerchantStateQueryResponse = JSON.parse(dataStr);
-      parsed.meta = {
-        request_id: reqId,
-        request_sent_at: sentAt,
-        response_received_at: new Date().toISOString(),
-        roundtrip_latency_ms: roundtrip,
-        data_source: "LIVE HUGGING FACE BACKEND",
-      };
-      return parsed;
-    } catch (err) {
-      console.error("Gradio predict error for analyze_merchant:", err);
-    }
-  }
+  const res = await fetch("/api/merchant", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ merchant_id: merchantId }),
+  });
 
   const roundtrip = Math.round(performance.now() - start);
-  return {
-    merchant_id: merchantId,
-    rolling_window: {
-      rolling_txn_count_15m: 15,
-      baseline_txn_count_15m: 15,
-      velocity_ratio: 1.0,
-      estimated_fraud_count: 0.12,
-      expected_fraud_count: 0.12,
-      fraud_excess_ratio: 1.0,
-    },
-    incident_state: {
-      merchant_id: merchantId,
-      current_spike_probability: 0.05,
-      current_fraud_excess_ratio: 1.0,
-      current_velocity_ratio: 1.0,
-      suspicious_transaction_count: 0,
-      consecutive_suspicious_windows: 0,
-      campaign_active: false,
-    },
-    meta: {
-      request_id: reqId,
-      request_sent_at: sentAt,
-      response_received_at: new Date().toISOString(),
-      roundtrip_latency_ms: roundtrip,
-      data_source: "CLIENT FALLBACK",
-    },
+  const json = await res.json();
+
+  if (!res.ok || !json.success || !json.data) {
+    throw new Error(json?.error?.message || `Merchant query failed with HTTP ${res.status}`);
+  }
+
+  const parsed: MerchantStateQueryResponse = json.data;
+  parsed.meta = {
+    request_id: reqId,
+    request_sent_at: sentAt,
+    response_received_at: new Date().toISOString(),
+    roundtrip_latency_ms: roundtrip,
+    data_source: "LIVE HUGGING FACE BACKEND",
   };
+
+  return parsed;
 }
 
 /**
- * Resets all demo merchant states.
+ * Explains evidence via POST /api/explain
+ */
+export async function explainEvidencePayload(evidenceJson: string): Promise<any> {
+  const res = await fetch("/api/explain", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ evidence_json: evidenceJson }),
+  });
+
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json?.error?.message || `Explanation failed with HTTP ${res.status}`);
+  }
+
+  return json.data;
+}
+
+/**
+ * Resets demo state via POST /api/reset
  */
 export async function resetDemoState(): Promise<{ status: string; message: string; meta?: ResponseMetadata }> {
   const reqId = generateRequestId();
   const sentAt = new Date().toISOString();
   const start = performance.now();
 
-  const client = await getClient();
-  if (client) {
-    try {
-      const res = await client.predict("reset_demo_state", []);
-      const roundtrip = Math.round(performance.now() - start);
-      const dataStr = Array.isArray(res.data) ? (res.data[0] as string) : String(res.data);
-      const parsed = JSON.parse(dataStr);
-      parsed.meta = {
-        request_id: reqId,
-        request_sent_at: sentAt,
-        response_received_at: new Date().toISOString(),
-        roundtrip_latency_ms: roundtrip,
-        data_source: "LIVE HUGGING FACE BACKEND",
-      };
-      return parsed;
-    } catch (err) {
-      console.error("Gradio predict error for reset_demo_state:", err);
-    }
-  }
+  const res = await fetch("/api/reset", {
+    method: "POST",
+  });
+
   const roundtrip = Math.round(performance.now() - start);
-  return {
-    status: "SUCCESS",
-    message: "Demo state reset completed.",
-    meta: {
-      request_id: reqId,
-      request_sent_at: sentAt,
-      response_received_at: new Date().toISOString(),
-      roundtrip_latency_ms: roundtrip,
-      data_source: "CLIENT FALLBACK",
-    },
+  const json = await res.json();
+
+  if (!res.ok || !json.success || !json.data) {
+    throw new Error(json?.error?.message || `Reset demo state failed with HTTP ${res.status}`);
+  }
+
+  const parsed = json.data;
+  parsed.meta = {
+    request_id: reqId,
+    request_sent_at: sentAt,
+    response_received_at: new Date().toISOString(),
+    roundtrip_latency_ms: roundtrip,
+    data_source: "LIVE HUGGING FACE BACKEND",
   };
+
+  return parsed;
 }
