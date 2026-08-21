@@ -197,8 +197,8 @@ def analyze_merchant(merchant_id: str) -> str:
     res = {
         "merchant_id": m_id,
         "rolling_window": {
-            "rolling_txn_count_15m": m_state.rolling_txn_count_15m,
-            "baseline_txn_count_15m": m_state.baseline_txn_count_15m,
+            "rolling_txn_count_15m": m_state.rolling_15m_volume,
+            "baseline_txn_count_15m": m_state.baseline_txn_15m,
             "velocity_ratio": round(m_state.velocity_ratio, 2),
             "estimated_fraud_count": round(m_state.calibrated_estimated_fraud_count, 4),
             "expected_fraud_count": round(m_state.expected_fraud_count, 4),
