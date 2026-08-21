@@ -25,19 +25,28 @@ export default function SLMExplanationCard({ data, isLoading }: Props) {
   if (!data) return null;
 
   const exp = data.explanation;
+  const isSlmGenerated = data.performance.slm_latency_ms > 0;
 
   return (
     <div className="bg-brand-black border border-brand-border p-6 flex flex-col justify-between">
       <div>
-        <div className="flex items-center justify-between border-b border-brand-border/60 pb-4 mb-6">
-          <div className="inline-flex items-center space-x-2 bg-brand-red/10 border border-brand-red/30 px-3 py-1 font-mono text-[11px] text-brand-red uppercase">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-brand-border/60 pb-4 mb-6 gap-2 font-mono text-xs">
+          <div className={`inline-flex items-center space-x-2 border px-3 py-1 font-mono text-[11px] uppercase font-bold ${
+            isSlmGenerated
+              ? "bg-brand-red/10 border-brand-red/30 text-brand-red"
+              : "bg-brand-dark border-brand-border text-brand-muted"
+          }`}>
             <Cpu className="w-3.5 h-3.5" />
-            <span>AI-GENERATED EXPLANATION</span>
+            <span>EXPLANATION SOURCE: {isSlmGenerated ? "Qwen/Qwen2.5-0.5B-Instruct" : "DETERMINISTIC FALLBACK"}</span>
           </div>
 
-          <div className="flex items-center space-x-2 font-mono text-xs text-brand-muted">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Decision Source: <strong className="text-white">DETERMINISTIC RISK ENGINE</strong></span>
+          <div className="flex items-center space-x-3 text-brand-muted text-[11px]">
+            <span>SLM Latency: <strong className="text-emerald-400">{data.performance.slm_latency_ms} ms</strong></span>
+            <span>|</span>
+            <div className="flex items-center space-x-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Decision Authority: <strong className="text-white">DETERMINISTIC RISK ENGINE</strong></span>
+            </div>
           </div>
         </div>
 
