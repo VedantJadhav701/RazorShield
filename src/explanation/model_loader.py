@@ -24,10 +24,12 @@ LOGGER = logging.getLogger("slm-model-loader")
 
 
 def _run_slm_generation(model, tokenizer, inputs, max_new_tokens: int, temperature: float):
-    """Core CausalLM generation execution function."""
+    """Core CausalLM generation execution function executed inside GPU context."""
+    target_device = "cuda" if torch.cuda.is_available() else "cpu"
+    cuda_inputs = {k: v.to(target_device) for k, v in inputs.items()}
     with torch.no_grad():
         output_tokens = model.generate(
-            **inputs,
+            **cuda_inputs,
             max_new_tokens=max_new_tokens,
             temperature=temperature,
             do_sample=False if temperature < 0.05 else True,
@@ -57,7 +59,14 @@ class SLMModelLoader:
         temperature: float | None = None,
     ):
         self.model_name = model_name or os.getenv("SLM_MODEL", "Qwen/Qwen2.5-0.5B-Instruct")
-        self.device_str = device or os.getenv("SLM_DEVICE", "cuda" if torch.cuda.is_available() else "cpu")
+        
+        if device:
+            self.device_str = device
+        elif HAS_SPACES:
+            self.device_str = "cuda"
+        else:
+            self.device_str = "cuda" if torch.cuda.is_available() else "cpu"
+
         self.max_new_tokens = max_new_tokens or int(os.getenv("SLM_MAX_NEW_TOKENS", "160"))
         self.temperature = temperature or float(os.getenv("SLM_TEMPERATURE", "0.1"))
 
@@ -78,15 +87,22 @@ class SLMModelLoader:
 
             dtype = torch.float16 if self.device_str == "cuda" or HAS_SPACES else torch.float32
 
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_name,
-                torch_dtype=dtype,
-                device_map="auto" if self.device_str == "cuda" else None,
-                trust_remote_code=True,
-            )
+            if HAS_SPACES:
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.model_name,
+                    torch_dtype=dtype,
+                    trust_remote_code=True,
+                )
+            else:
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.model_name,
+                    torch_dtype=dtype,
+                    device_map="auto" if self.device_str == "cuda" else None,
+                    trust_remote_code=True,
+                )
 
-            if self.device_str == "cpu" and not HAS_SPACES:
-                self.model = self.model.to("cpu")
+                if self.device_str == "cpu":
+                    self.model = self.model.to("cpu")
 
             self.model.eval()
             self.is_loaded = True
@@ -103,8 +119,6 @@ class SLMModelLoader:
             raise RuntimeError("Model is not loaded. Call load_model() first.")
 
         inputs = self.tokenizer(prompt, return_tensors="pt")
-        target_device = "cuda" if (self.device_str == "cuda" or HAS_SPACES) else "cpu"
-        inputs = {k: v.to(target_device) for k, v in inputs.items()}
 
         output_tokens = _gpu_generate_wrapper(
             self.model,
