@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { MessageSquare, Send, X, Bot, Loader2, Sparkles, ShieldCheck } from "lucide-react";
+import { MessageSquare, Send, X, Bot, Loader2, Sparkles } from "lucide-react";
 import { AnalyzeTransactionResponse } from "@/lib/types";
 import { explainEvidencePayload } from "@/lib/api";
 
@@ -25,7 +25,7 @@ export default function SLMChatDrawer({ data }: Props) {
     {
       id: "init",
       sender: "slm",
-      text: "Hello, I am the RazorShield Qwen2.5-0.5B SLM Assistant. Ask me anything about the current transaction risk assessment, merchant evidence, or policy decision.",
+      text: "Hello! I am RAZOR, your RazorShield AI Risk Assistant powered by Qwen2.5-0.5B. Ask me anything about the active transaction evaluation, merchant evidence signals, or policy decision.",
       timestamp: new Date().toLocaleTimeString(),
     },
   ]);
@@ -55,25 +55,33 @@ export default function SLMChatDrawer({ data }: Props) {
     const start = performance.now();
 
     try {
-      // Build structured evidence object from active data
-      const evidenceContext = data
-        ? {
-            merchant_id: data.merchant_id,
-            transaction_id: data.transaction_id,
-            decision: data.decision.action,
-            policy_mode: data.decision.policy_mode,
-            fraud_probability: data.transaction_risk.fraud_probability,
-            spike_probability: data.merchant_risk.spike_probability,
-            fraud_excess_ratio: data.merchant_risk.fraud_excess_ratio,
-            velocity_ratio: data.merchant_risk.velocity_ratio,
-            incident_state: data.merchant_risk.incident_state,
-            campaign_active: data.campaign.active,
-            user_question: textToSend,
-          }
-        : {
-            user_question: textToSend,
-            note: "No active transaction selected yet.",
-          };
+      // Build complete, valid EvidenceInput object for Pydantic schema
+      const evidenceContext = {
+        merchant_id: data?.merchant_id || "M_101",
+        incident_state: data?.merchant_risk?.incident_state || "NORMAL",
+        severity: data?.merchant_risk?.severity || "LOW",
+        incident_score: data?.merchant_risk?.incident_score ?? 0.05,
+        spike_probability: data?.merchant_risk?.spike_probability ?? 0.0,
+        fraud_excess_ratio: data?.merchant_risk?.fraud_excess_ratio ?? 1.0,
+        velocity_ratio: data?.merchant_risk?.velocity_ratio ?? 1.0,
+        suspicious_windows: data?.merchant_risk?.suspicious_windows ?? 0,
+        total_suspicious_windows: data?.merchant_risk?.suspicious_windows ?? 0,
+        campaign_active: Boolean(data?.campaign?.active),
+        policy_mode: data?.decision?.policy_mode || "BALANCED",
+        recommended_action: data?.decision?.action || "APPROVE",
+        signals: [
+          {
+            name: "fraud_excess_ratio",
+            value: data?.merchant_risk?.fraud_excess_ratio ?? 1.0,
+            direction: (data?.merchant_risk?.fraud_excess_ratio ?? 1.0) > 1.5 ? "elevated" : "normal",
+          },
+          {
+            name: "velocity_ratio",
+            value: data?.merchant_risk?.velocity_ratio ?? 1.0,
+            direction: (data?.merchant_risk?.velocity_ratio ?? 1.0) > 2.0 ? "elevated" : "normal",
+          },
+        ],
+      };
 
       const res = await explainEvidencePayload(JSON.stringify(evidenceContext));
       const latency = Math.round(performance.now() - start);
@@ -96,7 +104,7 @@ export default function SLMChatDrawer({ data }: Props) {
       const errorMsg: ChatMessage = {
         id: Math.random().toString(),
         sender: "slm",
-        text: `Error reaching SLM assistant: ${err.message || "Request timed out"}`,
+        text: `Error reaching RAZOR assistant: ${err.message || "Request failed"}`,
         timestamp: new Date().toLocaleTimeString(),
       };
       setMessages((prev) => [...prev, errorMsg]);
@@ -110,10 +118,10 @@ export default function SLMChatDrawer({ data }: Props) {
       {/* Floating Co-Pilot Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 bg-brand-red hover:bg-brand-red-hover text-white px-4 py-3 font-mono text-xs uppercase font-bold flex items-center space-x-2 shadow-2xl z-50 transition-transform active:scale-95"
+        className="fixed bottom-6 right-6 bg-brand-red hover:bg-brand-red-hover text-white px-4 py-3 font-mono text-xs uppercase font-bold flex items-center space-x-2 shadow-2xl z-50 transition-transform active:scale-95 rounded-none"
       >
         <Bot className="w-4 h-4" />
-        <span>SLM CO-PILOT (QWEN2.5-0.5B)</span>
+        <span>RAZOR AI ASSISTANT</span>
         <Sparkles className="w-3.5 h-3.5 fill-white text-white animate-pulse" />
       </button>
 
@@ -124,7 +132,7 @@ export default function SLMChatDrawer({ data }: Props) {
           <div className="p-4 border-b border-brand-border/60 bg-brand-dark flex items-center justify-between font-mono text-xs">
             <div className="flex items-center space-x-2 text-brand-red font-bold uppercase">
               <Bot className="w-4 h-4" />
-              <span>SLM RISK ASSISTANT</span>
+              <span>RAZOR AI ASSISTANT</span>
             </div>
 
             <div className="flex items-center space-x-3 text-brand-muted">
@@ -145,7 +153,7 @@ export default function SLMChatDrawer({ data }: Props) {
             <span>
               CONTEXT:{" "}
               <strong className="text-white">
-                {data ? `${data.merchant_id} / ${data.transaction_id}` : "NO TRANSACTION SELECTED"}
+                {data ? `${data.merchant_id} / ${data.transaction_id}` : "DEFAULT CONTEXT (M_101)"}
               </strong>
             </span>
             {data && (
@@ -165,7 +173,7 @@ export default function SLMChatDrawer({ data }: Props) {
                 }`}
               >
                 <div className="flex items-center space-x-2 text-[10px] text-brand-muted">
-                  <span>{msg.sender === "user" ? "ANALYST" : "SLM ASSISTANT"}</span>
+                  <span>{msg.sender === "user" ? "ANALYST" : "RAZOR ASSISTANT"}</span>
                   <span>•</span>
                   <span>{msg.timestamp}</span>
                   {msg.latencyMs && (
@@ -188,7 +196,7 @@ export default function SLMChatDrawer({ data }: Props) {
             {isLoading && (
               <div className="flex items-center space-x-2 font-mono text-[11px] text-brand-red animate-pulse p-2">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Qwen2.5-0.5B evaluating structured evidence...</span>
+                <span>RAZOR assistant evaluating structured evidence...</span>
               </div>
             )}
           </div>
@@ -218,13 +226,13 @@ export default function SLMChatDrawer({ data }: Props) {
                 value={inputQuery}
                 onChange={(e) => setInputQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Ask SLM assistant about risk context..."
+                placeholder="Ask RAZOR assistant about risk context..."
                 className="flex-1 bg-brand-black border border-brand-border text-white px-3 py-2 font-mono text-xs focus:outline-none focus:border-brand-red"
               />
               <button
                 onClick={() => handleSend()}
                 disabled={isLoading || !inputQuery.trim()}
-                className="bg-brand-red hover:bg-brand-red-hover disabled:bg-brand-border text-white px-3 py-2 transition-colors"
+                className="bg-brand-red hover:bg-brand-red-hover disabled:bg-brand-border text-white px-3 py-2 transition-colors rounded-none"
               >
                 <Send className="w-4 h-4" />
               </button>

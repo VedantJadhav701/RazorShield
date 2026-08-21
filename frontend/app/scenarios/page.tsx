@@ -172,50 +172,56 @@ export default function ScenariosPage() {
         {/* Execution Results */}
         {executionState === "COMPLETE" && result && (
           <div className="space-y-6">
-            <div className="bg-brand-black border border-brand-border p-6 space-y-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-brand-border/60 pb-4 gap-4">
-                <div>
-                  <span className="font-mono text-xs text-brand-red uppercase font-bold block mb-1">
-                    REPLAY EXECUTION COMPLETE
-                  </span>
-                  <h3 className="font-sans font-bold text-2xl text-white">
-                    {result.scenario_name} ({result.merchant_id})
-                  </h3>
-                </div>
-
-                <div className={`inline-flex items-center space-x-2 border px-4 py-2 font-mono text-xs uppercase font-bold ${
-                  isAlert
-                    ? "bg-brand-red/10 border-brand-red/40 text-brand-red"
-                    : isVerify
-                    ? "bg-amber-400/10 border-amber-400/40 text-amber-400"
-                    : "bg-emerald-400/10 border-emerald-400/40 text-emerald-400"
-                }`}>
-                  <Icon className="w-4 h-4 stroke-[2.5]" />
-                  <span>FINAL INCIDENT STATE: {result.final_incident_state}</span>
-                </div>
+            {result.error ? (
+              <div className="bg-brand-red/10 border border-brand-red/40 p-6 font-mono text-xs text-brand-red space-y-2">
+                <span className="font-bold uppercase block">SCENARIO REPLAY ERROR</span>
+                <p>{result.error}</p>
               </div>
+            ) : (
+              <div className="bg-brand-black border border-brand-border p-6 space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-brand-border/60 pb-4 gap-4">
+                  <div>
+                    <span className="font-mono text-xs text-brand-red uppercase font-bold block mb-1">
+                      REPLAY EXECUTION COMPLETE
+                    </span>
+                    <h3 className="font-sans font-bold text-2xl text-white">
+                      {result.scenario_name} ({result.merchant_id || "M_DEMO"})
+                    </h3>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 font-mono text-xs">
-                <div className="bg-brand-dark border border-brand-border/60 p-4">
-                  <span className="text-brand-muted block mb-1">Total Transactions:</span>
-                  <span className="text-white text-xl font-bold">{result.total_transactions}</span>
+                  <div className={`inline-flex items-center space-x-2 border px-4 py-2 font-mono text-xs uppercase font-bold ${
+                    isAlert
+                      ? "bg-brand-red/10 border-brand-red/40 text-brand-red"
+                      : isVerify
+                      ? "bg-amber-400/10 border-amber-400/40 text-amber-400"
+                      : "bg-emerald-400/10 border-emerald-400/40 text-emerald-400"
+                  }`}>
+                    <Icon className="w-4 h-4 stroke-[2.5]" />
+                    <span>FINAL INCIDENT STATE: {result.final_incident_state || "NORMAL"}</span>
+                  </div>
                 </div>
 
-                <div className="bg-brand-dark border border-brand-border/60 p-4">
-                  <span className="text-brand-muted block mb-1">Engine Processing Time:</span>
-                  <span className="text-white text-xl font-bold">{formatFixed(result.replay_time_ms, 1)} ms</span>
-                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 font-mono text-xs">
+                  <div className="bg-brand-dark border border-brand-border/60 p-4">
+                    <span className="text-brand-muted block mb-1">Total Transactions:</span>
+                    <span className="text-white text-xl font-bold">{result.total_transactions ?? 0}</span>
+                  </div>
 
-                <div className="bg-brand-dark border border-brand-border/60 p-4">
-                  <span className="text-brand-muted block mb-1">Normal Windows:</span>
-                  <span className="text-emerald-400 text-xl font-bold">{result.incident_state_distribution.NORMAL}</span>
-                </div>
+                  <div className="bg-brand-dark border border-brand-border/60 p-4">
+                    <span className="text-brand-muted block mb-1">Engine Processing Time:</span>
+                    <span className="text-white text-xl font-bold">{formatFixed(result.replay_time_ms ?? 0, 1)} ms</span>
+                  </div>
 
-                <div className="bg-brand-dark border border-brand-border/60 p-4">
-                  <span className="text-brand-muted block mb-1">Alert Incident Windows:</span>
-                  <span className="text-brand-red text-xl font-bold">{result.incident_state_distribution.ALERT}</span>
+                  <div className="bg-brand-dark border border-brand-border/60 p-4">
+                    <span className="text-brand-muted block mb-1">Normal Windows:</span>
+                    <span className="text-emerald-400 text-xl font-bold">{result.incident_state_distribution?.NORMAL ?? 0}</span>
+                  </div>
+
+                  <div className="bg-brand-dark border border-brand-border/60 p-4">
+                    <span className="text-brand-muted block mb-1">Alert Incident Windows:</span>
+                    <span className="text-brand-red text-xl font-bold">{result.incident_state_distribution?.ALERT ?? 0}</span>
+                  </div>
                 </div>
-              </div>
 
               {/* Data Provenance Footer */}
               {meta && (
