@@ -1,0 +1,43 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+api_keys.txt
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Raw datasets
+data/raw/
+
+# Generated datasets / large data artifacts
+data/processed/*.parquet
+data/processed/*.csv
+data/processed/*.json
+data/explanation/*.jsonl
+data/explanation/*.json
+data/explanation/*.csv
+data/explanation/model_outputs/
+
+# Local logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local model/cache directories
+.cache/
+huggingface_cache/

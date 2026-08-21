@@ -1,0 +1,111 @@
+{
+  "project": "RazorShield",
+  "timestamp": "2026-08-21T19:09:02.006171",
+  "random_seed": 42,
+  "transaction_model": {
+    "model_type": "XGBoostClassifier",
+    "saved_path": "C:\\Users\\HP\\projects\\RazorShield\\models\\transaction_model\\xgboost_model.joblib",
+    "training_split": "train (413,378 rows)",
+    "selected_threshold": 0.75,
+    "feature_count": 28,
+    "deployable_features": [
+      "amount",
+      "amount_log1p",
+      "hour",
+      "day_of_week",
+      "is_weekend",
+      "customer_txn_count_past",
+      "customer_amount_mean_past",
+      "customer_amount_std_past",
+      "device_txn_count_past",
+      "customer_amount_dev",
+      "identity_available",
+      "missing_p_email",
+      "missing_r_email",
+      "missing_addr1",
+      "missing_device_info",
+      "ProductCD",
+      "card1",
+      "card2",
+      "card3",
+      "card4",
+      "card5",
+      "card6",
+      "addr1",
+      "addr2",
+      "P_emaildomain",
+      "R_emaildomain",
+      "DeviceType",
+      "DeviceInfo"
+    ],
+    "validation_metrics": {
+      "threshold": 0.75,
+      "precision": 0.2604,
+      "recall": 0.2877,
+      "f1": 0.2734,
+      "pr_auc": 0.1936,
+      "roc_auc": 0.7997,
+      "confusion_matrix": [
+        [
+          82979,
+          2519
+        ],
+        [
+          2196,
+          887
+        ]
+      ],
+      "tp": 887,
+      "fp": 2519,
+      "tn": 82979,
+      "fn": 2196,
+      "fpr": 0.0295,
+      "fnr": 0.7123,
+      "num_predicted_positives": 3406
+    }
+  },
+  "spike_model": {
+    "model_type": "XGBoostClassifier",
+    "saved_path": "C:\\Users\\HP\\projects\\RazorShield\\models\\spike_model\\xgboost_spike_model.joblib",
+    "training_split": "train scenarios (42 scenarios)",
+    "selected_threshold": 0.2,
+    "feature_count": 7,
+    "deployable_features": [
+      "rolling_txn_15m",
+      "baseline_txn_15m",
+      "velocity_ratio",
+      "estimated_fraud_rate_15m",
+      "baseline_fraud_rate",
+      "estimated_fraud_rate_deviation",
+      "amount_deviation"
+    ],
+    "oracle_features_excluded": [
+      "rolling_fraud_rate_15m"
+    ],
+    "validation_metrics": {
+      "threshold": 0.2,
+      "precision": 0.7075,
+      "recall": 0.8244,
+      "f1": 0.7615,
+      "pr_auc": 0.8321,
+      "roc_auc": 0.9442,
+      "confusion_matrix": [
+        [
+          19828,
+          1931
+        ],
+        [
+          995,
+          4670
+        ]
+      ],
+      "tp": 4670,
+      "fp": 1931,
+      "tn": 19828,
+      "fn": 995,
+      "fpr": 0.0887,
+      "fnr": 0.1756,
+      "num_predicted_positives": 6601
+    }
+  }
+}
