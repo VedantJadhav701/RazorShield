@@ -475,23 +475,18 @@ def build_gradio_app() -> gr.Blocks:
     return demo
 
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
 demo = build_gradio_app()
 
-app = FastAPI(title="RazorShield API & Risk Intelligence")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app = gr.mount_gradio_app(app, demo, path="/")
-
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    from fastapi.middleware.cors import CORSMiddleware
+    demo.launch(server_name="0.0.0.0", server_port=7860, strict_cors=False)
+    if hasattr(demo, "app") and demo.app is not None:
+        demo.app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
 
