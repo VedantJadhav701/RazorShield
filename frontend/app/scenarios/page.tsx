@@ -236,6 +236,7 @@ export default function ScenariosPage() {
                 </div>
               )}
             </div>
+          )}
 
             {/* Explanation */}
             {result.explanation && (
