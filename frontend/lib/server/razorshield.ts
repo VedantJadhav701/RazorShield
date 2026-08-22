@@ -62,18 +62,28 @@ async function callGradioApi<T = any>(apiName: string, data: any[]): Promise<T> 
   const text = await getRes.text();
   const lines = text.split("\n");
   for (const line of lines) {
-    if (line.startsWith("data: ")) {
-      const rawDataStr = line.substring(6).trim();
-      const parsedArray = JSON.parse(rawDataStr);
-      const rawResult = Array.isArray(parsedArray) ? parsedArray[0] : parsedArray;
-      if (typeof rawResult === "string") {
-        try {
-          return JSON.parse(rawResult) as T;
-        } catch {
-          return rawResult as unknown as T;
-        }
+    const trimmed = line.trim();
+    if (trimmed.startsWith("data: ")) {
+      const rawDataStr = trimmed.substring(6).trim();
+      if (!rawDataStr || rawDataStr === "null") {
+        continue;
       }
-      return rawResult as T;
+      try {
+        const parsedArray = JSON.parse(rawDataStr);
+        const rawResult = Array.isArray(parsedArray) ? parsedArray[0] : parsedArray;
+        if (!rawResult) continue;
+
+        if (typeof rawResult === "string") {
+          try {
+            return JSON.parse(rawResult) as T;
+          } catch {
+            return rawResult as unknown as T;
+          }
+        }
+        return rawResult as T;
+      } catch {
+        continue;
+      }
     }
   }
 
