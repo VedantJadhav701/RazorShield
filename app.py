@@ -115,20 +115,10 @@ try:
     import spaces
 
     _gpu_decorator = spaces.GPU
-
-    @spaces.GPU
-    def _zero_gpu_startup_check():
-        """Satisfies HF ZeroGPU runtime detector on startup without consuming GPU."""
-        return True
-
-    _zero_gpu_startup_check()
-    LOGGER.info("ZeroGPU compatibility hook registered and initialized.")
+    LOGGER.info("ZeroGPU compatibility hook registered.")
 except Exception:
     def _gpu_decorator(func):
         return func
-
-    def _zero_gpu_startup_check():
-        return True
 
 
 # =============================================================================
