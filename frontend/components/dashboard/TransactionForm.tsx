@@ -48,7 +48,7 @@ const SAMPLE_PRESETS: Preset[] = [
   {
     id: "anomaly",
     label: "Amount Anomaly",
-    desc: "$4,850 wire transfer",
+    desc: "$4,850 ACH transfer",
     badge: "ELEVATED",
     badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/30",
     data: {
@@ -57,7 +57,7 @@ const SAMPLE_PRESETS: Preset[] = [
       customerId: "C_9999",
       deviceId: "D_999",
       amount: 4850.00,
-      paymentMethod: "wire_transfer",
+      paymentMethod: "ach",
       transactionType: "transfer",
       policyMode: "BALANCED",
     },
