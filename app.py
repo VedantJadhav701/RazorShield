@@ -114,6 +114,8 @@ INFERENCE_ADAPTER = InferenceAdapter()
 try:
     import spaces
 
+    _gpu_decorator = spaces.GPU
+
     @spaces.GPU
     def _zero_gpu_startup_check():
         """Satisfies HF ZeroGPU runtime detector on startup without consuming GPU."""
@@ -122,6 +124,9 @@ try:
     _zero_gpu_startup_check()
     LOGGER.info("ZeroGPU compatibility hook registered and initialized.")
 except Exception:
+    def _gpu_decorator(func):
+        return func
+
     def _zero_gpu_startup_check():
         return True
 
@@ -171,6 +176,7 @@ else:
 # Grounded NVIDIA Explanation Helper
 # =============================================================================
 
+@_gpu_decorator
 def _generate_explanation(exp_input: ExplanationInput) -> tuple[dict[str, Any], dict[str, Any]]:
     """
     Convert deterministic RazorShield evidence into a concise grounded explanation.
