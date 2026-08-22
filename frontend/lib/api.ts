@@ -20,10 +20,14 @@ function generateRequestId(): string {
 
 function extractErrorMessage(json: any, fallback: string): string {
   if (!json) return fallback;
-  if (typeof json.error === "string") return json.error;
-  if (json.error?.message) return json.error.message;
-  if (json.error?.details) return json.error.details;
-  if (json.message) return json.message;
+  if (typeof json.error === "string" && json.error.trim()) return json.error;
+  if (json.error && typeof json.error === "object") {
+    if (typeof json.error.message === "string" && json.error.message.trim()) return json.error.message;
+    if (typeof json.error.details === "string" && json.error.details.trim()) return json.error.details;
+    if (typeof json.error.code === "string" && json.error.code.trim()) return json.error.code;
+  }
+  if (typeof json.message === "string" && json.message.trim()) return json.message;
+  if (typeof json.details === "string" && json.details.trim()) return json.details;
   return fallback;
 }
 
