@@ -231,14 +231,26 @@ CRITICAL RULES:
             ],
             temperature=0.1,
             top_p=1,
-            max_tokens=500,
+            max_tokens=2048,
             stream=False,
             timeout=NVIDIA_TIMEOUT_SECONDS,
             response_format={"type": "json_object"},
         )
 
         content = completion.choices[0].message.content or ""
-        generated = json.loads(content)
+        
+        cleaned = content.strip()
+        if "```json" in cleaned:
+            cleaned = cleaned.split("```json")[1].split("```")[0].strip()
+        elif "```" in cleaned:
+            cleaned = cleaned.split("```")[1].split("```")[0].strip()
+
+        start_idx = cleaned.find("{")
+        end_idx = cleaned.rfind("}")
+        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+            cleaned = cleaned[start_idx : end_idx + 1]
+
+        generated = json.loads(cleaned)
 
         # ---- Deterministic grounding validation ----
         if not isinstance(generated, dict):
