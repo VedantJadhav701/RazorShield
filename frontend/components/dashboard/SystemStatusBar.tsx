@@ -48,7 +48,7 @@ export default function SystemStatusBar({
 
           <div className="inline-flex items-center space-x-1.5 border border-brand-border bg-brand-dark px-3 py-1 text-white">
             <Cpu className="w-3.5 h-3.5 text-brand-red" />
-            <span>SLM: Qwen2.5-0.5B</span>
+            <span>SLM: NVIDIA gpt-oss-20b</span>
           </div>
         </div>
 

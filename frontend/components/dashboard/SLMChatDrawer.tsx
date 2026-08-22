@@ -25,7 +25,7 @@ export default function SLMChatDrawer({ data }: Props) {
     {
       id: "init",
       sender: "slm",
-      text: "Hello! I am RAZOR, your RazorShield AI Risk Assistant powered by Qwen2.5-0.5B. Ask me anything about the active transaction evaluation, merchant evidence signals, or policy decision.",
+      text: "Hello! I am RAZOR, your RazorShield AI Risk Assistant powered by NVIDIA Build API (gpt-oss-20b) / Qwen2.5-0.5B. Ask me anything about the active transaction evaluation, merchant evidence signals, or policy decision.",
       timestamp: new Date().toLocaleTimeString(),
     },
   ]);
@@ -155,7 +155,7 @@ export default function SLMChatDrawer({ data }: Props) {
 
             <div className="flex items-center space-x-3 text-brand-muted">
               <span className="text-[10px] border border-brand-border px-2 py-0.5 text-emerald-400">
-                Qwen2.5-0.5B
+                NVIDIA gpt-oss-20b
               </span>
               <button
                 onClick={() => setIsOpen(false)}
