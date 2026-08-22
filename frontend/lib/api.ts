@@ -18,6 +18,15 @@ function generateRequestId(): string {
   return `REQ_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 }
 
+function extractErrorMessage(json: any, fallback: string): string {
+  if (!json) return fallback;
+  if (typeof json.error === "string") return json.error;
+  if (json.error?.message) return json.error.message;
+  if (json.error?.details) return json.error.details;
+  if (json.message) return json.message;
+  return fallback;
+}
+
 /**
  * Health check probe via /api/health
  */
@@ -28,12 +37,15 @@ export async function checkBackendHealth(): Promise<BackendHealthStatus> {
     const res = await fetch("/api/health", { cache: "no-store" });
     const latency = Math.round(performance.now() - start);
     if (res.ok) {
-      return {
-        status: "CONNECTED",
-        endpoint: "/api/health (Vercel Server Proxy)",
-        last_sync_at: new Date().toISOString(),
-        roundtrip_latency_ms: latency,
-      };
+      const json = await res.json();
+      if (json.success) {
+        return {
+          status: "CONNECTED",
+          endpoint: "/api/health (Vercel Server Proxy)",
+          last_sync_at: new Date().toISOString(),
+          roundtrip_latency_ms: latency,
+        };
+      }
     }
   } catch (err: any) {
     console.warn("Health check error via /api/health:", err);
@@ -68,7 +80,7 @@ export async function analyzeTransaction(
   const json = await res.json();
 
   if (!res.ok || !json.success || !json.data) {
-    throw new Error(json?.error?.message || `Transaction analysis failed with HTTP ${res.status}`);
+    throw new Error(extractErrorMessage(json, `Transaction analysis failed with HTTP ${res.status}`));
   }
 
   const parsed: AnalyzeTransactionResponse = json.data;
@@ -104,7 +116,7 @@ export async function runScenarioReplay(
   const json = await res.json();
 
   if (!res.ok || !json.success || !json.data) {
-    throw new Error(json?.error?.message || `Scenario replay failed with HTTP ${res.status}`);
+    throw new Error(extractErrorMessage(json, `Scenario replay failed with HTTP ${res.status}`));
   }
 
   const parsed: ScenarioReplayResult = json.data;
@@ -137,7 +149,7 @@ export async function queryMerchantState(merchantId: string): Promise<MerchantSt
   const json = await res.json();
 
   if (!res.ok || !json.success || !json.data) {
-    throw new Error(json?.error?.message || `Merchant query failed with HTTP ${res.status}`);
+    throw new Error(extractErrorMessage(json, `Merchant query failed with HTTP ${res.status}`));
   }
 
   const parsed: MerchantStateQueryResponse = json.data;
@@ -164,7 +176,7 @@ export async function explainEvidencePayload(evidenceJson: string): Promise<any>
 
   const json = await res.json();
   if (!res.ok || !json.success) {
-    throw new Error(json?.error?.message || `Explanation failed with HTTP ${res.status}`);
+    throw new Error(extractErrorMessage(json, `Explanation failed with HTTP ${res.status}`));
   }
 
   return json.data;
@@ -186,7 +198,7 @@ export async function resetDemoState(): Promise<{ status: string; message: strin
   const json = await res.json();
 
   if (!res.ok || !json.success || !json.data) {
-    throw new Error(json?.error?.message || `Reset demo state failed with HTTP ${res.status}`);
+    throw new Error(extractErrorMessage(json, `Reset demo state failed with HTTP ${res.status}`));
   }
 
   const parsed = json.data;

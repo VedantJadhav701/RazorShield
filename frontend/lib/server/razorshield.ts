@@ -86,8 +86,19 @@ async function callGradioApi<T = any>(apiName: string, data: any[]): Promise<T> 
 export async function healthCheck(): Promise<ApiResponse<{ status: string; service: string; model: string; slm_loaded: boolean; policy_mode: string }>> {
   try {
     const start = performance.now();
-    await callGradioApi("analyze_merchant", ["M_HEALTH_CHECK"]);
+    const res = await callGradioApi("analyze_merchant", ["M_HEALTH_CHECK"]);
     const latency = Math.round(performance.now() - start);
+
+    if ((res as any)?.error) {
+      return {
+        success: false,
+        error: {
+          code: "BACKEND_ERROR",
+          message: (res as any).error,
+          details: (res as any).details || (res as any).error,
+        },
+      };
+    }
 
     return {
       success: true,
@@ -141,6 +152,17 @@ export async function analyzeTransaction(
       policyMode,
     ]);
 
+    if ((parsed as any)?.error) {
+      return {
+        success: false,
+        error: {
+          code: "BACKEND_ERROR",
+          message: (parsed as any).error,
+          details: (parsed as any).details || (parsed as any).error,
+        },
+      };
+    }
+
     return {
       success: true,
       data: parsed,
@@ -151,7 +173,7 @@ export async function analyzeTransaction(
       success: false,
       error: {
         code: "TRANSACTION_ANALYSIS_FAILED",
-        message: "Failed to evaluate transaction through backend risk engine.",
+        message: err.message || "Failed to evaluate transaction through backend risk engine.",
         details: err.message,
       },
     };
@@ -166,6 +188,18 @@ export async function analyzeMerchant(
 ): Promise<ApiResponse<MerchantStateQueryResponse>> {
   try {
     const parsed = await callGradioApi<MerchantStateQueryResponse>("analyze_merchant", [merchantId]);
+
+    if ((parsed as any)?.error) {
+      return {
+        success: false,
+        error: {
+          code: "BACKEND_ERROR",
+          message: (parsed as any).error,
+          details: (parsed as any).details || (parsed as any).error,
+        },
+      };
+    }
+
     return {
       success: true,
       data: parsed,
@@ -176,7 +210,7 @@ export async function analyzeMerchant(
       success: false,
       error: {
         code: "MERCHANT_QUERY_FAILED",
-        message: "Failed to query merchant incident state from backend.",
+        message: err.message || "Failed to query merchant incident state from backend.",
         details: err.message,
       },
     };
@@ -192,6 +226,18 @@ export async function runScenario(
 ): Promise<ApiResponse<ScenarioReplayResult>> {
   try {
     const parsed = await callGradioApi<ScenarioReplayResult>("run_scenario", [scenarioName, policyMode]);
+
+    if ((parsed as any)?.error) {
+      return {
+        success: false,
+        error: {
+          code: "BACKEND_ERROR",
+          message: (parsed as any).error,
+          details: (parsed as any).details || (parsed as any).error,
+        },
+      };
+    }
+
     return {
       success: true,
       data: parsed,
@@ -202,7 +248,7 @@ export async function runScenario(
       success: false,
       error: {
         code: "SCENARIO_REPLAY_FAILED",
-        message: "Failed to execute scenario replay through backend.",
+        message: err.message || "Failed to execute scenario replay through backend.",
         details: err.message,
       },
     };
@@ -217,6 +263,18 @@ export async function explainEvidence(
 ): Promise<ApiResponse<any>> {
   try {
     const parsed = await callGradioApi("explain_evidence", [evidenceJson]);
+
+    if ((parsed as any)?.error) {
+      return {
+        success: false,
+        error: {
+          code: "BACKEND_ERROR",
+          message: (parsed as any).error,
+          details: (parsed as any).details || (parsed as any).error,
+        },
+      };
+    }
+
     return {
       success: true,
       data: parsed,
@@ -227,7 +285,7 @@ export async function explainEvidence(
       success: false,
       error: {
         code: "EXPLANATION_GENERATION_FAILED",
-        message: "Failed to generate explanation for evidence.",
+        message: err.message || "Failed to generate explanation for evidence.",
         details: err.message,
       },
     };
@@ -240,6 +298,18 @@ export async function explainEvidence(
 export async function resetDemoState(): Promise<ApiResponse<{ status: string; message: string }>> {
   try {
     const parsed = await callGradioApi<{ status: string; message: string }>("reset_demo_state", []);
+
+    if ((parsed as any)?.error) {
+      return {
+        success: false,
+        error: {
+          code: "BACKEND_ERROR",
+          message: (parsed as any).error,
+          details: (parsed as any).details || (parsed as any).error,
+        },
+      };
+    }
+
     return {
       success: true,
       data: parsed,
@@ -250,7 +320,7 @@ export async function resetDemoState(): Promise<ApiResponse<{ status: string; me
       success: false,
       error: {
         code: "RESET_FAILED",
-        message: "Failed to reset demo state on backend.",
+        message: err.message || "Failed to reset demo state on backend.",
         details: err.message,
       },
     };
