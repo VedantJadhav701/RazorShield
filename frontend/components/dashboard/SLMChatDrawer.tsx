@@ -69,6 +69,7 @@ export default function SLMChatDrawer({ data }: Props) {
         campaign_active: Boolean(data?.campaign?.active),
         policy_mode: data?.decision?.policy_mode || "BALANCED",
         recommended_action: data?.decision?.action || "APPROVE",
+        user_question: textToSend,
         signals: [
           {
             name: "fraud_excess_ratio",

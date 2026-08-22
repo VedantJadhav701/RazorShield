@@ -26,6 +26,7 @@ class ExplanationInput(BaseModel):
     policy_mode: str = Field(default="BALANCED", description="Policy operating mode")
     signals: list[dict[str, Any]] = Field(default_factory=list, description="Extracted evidence signals")
     recommended_action: str = Field(default="monitor", description="Engine recommended action")
+    user_question: str = Field(default="", description="Optional analyst question for interactive SLM assistant")
 
 
 class ExplanationOutput(BaseModel):

@@ -538,17 +538,23 @@ def run_scenario(
         "normal",
     )
 
-    if not feat_path.exists():
+    json_path = (
+        root_dir
+        / "data"
+        / "processed"
+        / "demo_scenarios.json"
+    )
 
+    if feat_path.exists():
+        df_b = pd.read_parquet(feat_path)
+    elif json_path.exists():
+        df_b = pd.read_json(json_path)
+    else:
         return _json_response(
             {
-                "error": "Dataset B features parquet missing"
+                "error": "Demo scenario dataset missing"
             }
         )
-
-    df_b = pd.read_parquet(
-        feat_path
-    )
 
     test_df = df_b[
         df_b["split"] == "test"

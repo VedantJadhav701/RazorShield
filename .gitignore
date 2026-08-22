@@ -27,6 +27,7 @@ data/raw/
 data/processed/*.parquet
 data/processed/*.csv
 data/processed/*.json
+!data/processed/demo_scenarios.json
 data/explanation/*.jsonl
 data/explanation/*.json
 data/explanation/*.csv
