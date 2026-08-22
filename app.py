@@ -693,14 +693,15 @@ def run_scenario(
         / "demo_scenarios.json"
     )
 
-    if feat_path.exists():
-        df_b = pd.read_parquet(feat_path)
-    elif json_path.exists():
+    if json_path.exists():
         df_b = pd.read_json(json_path)
+    elif feat_path.exists():
+        df_b = pd.read_parquet(feat_path)
     else:
+        LOGGER.error("Demo scenario dataset missing at %s", json_path)
         return _json_response(
             {
-                "error": "Demo scenario dataset missing"
+                "error": f"Demo scenario dataset missing at {json_path}"
             }
         )
 
