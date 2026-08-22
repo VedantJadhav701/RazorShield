@@ -1,8 +1,8 @@
 """
 model_loader.py
 ---------------
-Hugging Face Transformers & NVIDIA Build API model loader with ZeroGPU (@spaces.GPU) compatibility.
-Supports NVIDIA Build API (openai/gpt-oss-20b), local Hugging Face CausalLM, and CPU/CUDA fallback.
+NVIDIA Build API Client for RazorShield SLM Explainer.
+Operates 100% via API (Zero GPU / Zero Local Model Weight Overhead).
 """
 
 from __future__ import annotations
@@ -10,46 +10,13 @@ from __future__ import annotations
 import os
 import logging
 from typing import Any
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
-try:
-    import spaces
-    HAS_SPACES = True
-except ImportError:
-    HAS_SPACES = False
-    spaces = None
-
+HAS_SPACES = False
 LOGGER = logging.getLogger("slm-model-loader")
 
 
-def _run_slm_generation(model, tokenizer, inputs, max_new_tokens: int, temperature: float):
-    """Core CausalLM generation execution function executed inside GPU context."""
-    target_device = "cuda" if torch.cuda.is_available() else "cpu"
-    cuda_inputs = {k: v.to(target_device) for k, v in inputs.items()}
-    with torch.no_grad():
-        output_tokens = model.generate(
-            **cuda_inputs,
-            max_new_tokens=max_new_tokens,
-            temperature=temperature,
-            do_sample=False if temperature < 0.05 else True,
-            pad_token_id=tokenizer.pad_token_id,
-            eos_token_id=tokenizer.eos_token_id,
-        )
-    return output_tokens
-
-
-if HAS_SPACES and spaces is not None:
-    @spaces.GPU
-    def _gpu_generate_wrapper(model, tokenizer, inputs, max_new_tokens: int, temperature: float):
-        return _run_slm_generation(model, tokenizer, inputs, max_new_tokens, temperature)
-else:
-    def _gpu_generate_wrapper(model, tokenizer, inputs, max_new_tokens: int, temperature: float):
-        return _run_slm_generation(model, tokenizer, inputs, max_new_tokens, temperature)
-
-
 class SLMModelLoader:
-    """Loads Hugging Face / NVIDIA Build API models for zero-shot explanation generation."""
+    """NVIDIA Build API model loader for zero-shot explanation generation."""
 
     def __init__(
         self,
@@ -58,120 +25,62 @@ class SLMModelLoader:
         max_new_tokens: int | None = None,
         temperature: float | None = None,
     ):
-        self.model_name = model_name or os.getenv("SLM_MODEL", "openai/gpt-oss-20b" if os.getenv("NVIDIA_API_KEY") else "Qwen/Qwen2.5-0.5B-Instruct")
-        
-        if device:
-            self.device_str = device
-        elif HAS_SPACES:
-            self.device_str = "cuda"
-        else:
-            self.device_str = "cuda" if torch.cuda.is_available() else "cpu"
-
-        self.max_new_tokens = max_new_tokens or int(os.getenv("SLM_MAX_NEW_TOKENS", "160"))
-        self.temperature = temperature or float(os.getenv("SLM_TEMPERATURE", "0.1"))
-
-        self.tokenizer = None
-        self.model = None
+        self.model_name = model_name or os.getenv("NVIDIA_MODEL", "openai/gpt-oss-20b")
+        self.max_tokens = max_new_tokens or int(os.getenv("SLM_MAX_TOKENS", "4096"))
+        self.temperature = temperature or float(os.getenv("SLM_TEMPERATURE", "1.0"))
         self._is_loaded = False
 
     @property
     def is_loaded(self) -> bool:
-        """Returns True if NVIDIA API key is available or local model is loaded into memory."""
-        if os.getenv("NVIDIA_API_KEY") and os.getenv("NVIDIA_API_KEY").strip():
-            return True
-        return self._is_loaded
+        """Returns True if NVIDIA_API_KEY environment variable is configured."""
+        key = os.getenv("NVIDIA_API_KEY", "").strip()
+        return bool(key) or self._is_loaded
 
     @is_loaded.setter
     def is_loaded(self, value: bool):
         self._is_loaded = value
 
     def load_model(self) -> bool:
-        """Loads model into memory or registers NVIDIA Build API endpoint."""
-        if os.getenv("NVIDIA_API_KEY") and os.getenv("NVIDIA_API_KEY").strip():
-            LOGGER.info("NVIDIA_API_KEY detected. Using NVIDIA Build API (openai/gpt-oss-20b) as active SLM provider.")
+        """Validates NVIDIA Build API configuration."""
+        key = os.getenv("NVIDIA_API_KEY", "").strip()
+        if key:
+            LOGGER.info("NVIDIA_API_KEY detected. Active SLM: NVIDIA Build API (%s).", self.model_name)
             self._is_loaded = True
             return True
 
-        LOGGER.info("Loading SLM candidate '%s' on device '%s' (ZeroGPU: %s) ...", self.model_name, self.device_str, HAS_SPACES)
-        try:
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                self.model_name,
-                trust_remote_code=True,
-            )
-            if self.tokenizer.pad_token is None:
-                self.tokenizer.pad_token = self.tokenizer.eos_token
-
-            dtype = torch.float16 if self.device_str == "cuda" or HAS_SPACES else torch.float32
-
-            if HAS_SPACES:
-                self.model = AutoModelForCausalLM.from_pretrained(
-                    self.model_name,
-                    torch_dtype=dtype,
-                    trust_remote_code=True,
-                )
-            else:
-                self.model = AutoModelForCausalLM.from_pretrained(
-                    self.model_name,
-                    torch_dtype=dtype,
-                    device_map="auto" if self.device_str == "cuda" else None,
-                    trust_remote_code=True,
-                )
-
-                if self.device_str == "cpu":
-                    self.model = self.model.to("cpu")
-
-            self.model.eval()
-            self._is_loaded = True
-            LOGGER.info("Successfully loaded '%s' into memory.", self.model_name)
-            return True
-        except Exception as e:
-            LOGGER.error("Failed to load model '%s': %s", self.model_name, e)
-            self._is_loaded = False
-            return False
+        LOGGER.warning("NVIDIA_API_KEY is not set. SLM will fall back to Deterministic Explainer (0 GPU).")
+        self._is_loaded = False
+        return False
 
     def generate(self, prompt: str) -> str:
-        """Generates response using NVIDIA Build API (openai/gpt-oss-20b) or local Transformers/ZeroGPU."""
-        nvidia_key = os.getenv("NVIDIA_API_KEY")
-        if nvidia_key and nvidia_key.strip():
-            try:
-                from openai import OpenAI
-                client = OpenAI(
-                    base_url="https://integrate.api.nvidia.com/v1",
-                    api_key=nvidia_key.strip(),
-                )
-                model_name = os.getenv("NVIDIA_MODEL", "openai/gpt-oss-20b")
-                LOGGER.info("Executing SLM generation via NVIDIA Build API (%s)...", model_name)
-                completion = client.chat.completions.create(
-                    model=model_name,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=1,
-                    top_p=1,
-                    max_tokens=4096,
-                    stream=False,
-                )
-                reasoning = getattr(completion.choices[0].message, "reasoning_content", None)
-                if reasoning:
-                    LOGGER.info("NVIDIA Build API reasoning: %s", reasoning[:200])
-                content = completion.choices[0].message.content
-                if content and content.strip():
-                    return content.strip()
-            except Exception as exc:
-                LOGGER.warning("NVIDIA Build API call failed: %s. Falling back to local model...", exc)
+        """Generates response using NVIDIA Build API (openai/gpt-oss-20b)."""
+        nvidia_key = os.getenv("NVIDIA_API_KEY", "").strip()
+        if not nvidia_key:
+            raise RuntimeError("Model is not loaded. Please set NVIDIA_API_KEY environment variable.")
 
-        if not self._is_loaded or self.model is None or self.tokenizer is None:
-            raise RuntimeError("Model is not loaded. Call load_model() first.")
+        try:
+            from openai import OpenAI
+            client = OpenAI(
+                base_url="https://integrate.api.nvidia.com/v1",
+                api_key=nvidia_key,
+            )
+            LOGGER.info("Executing SLM generation via NVIDIA Build API (%s)...", self.model_name)
+            completion = client.chat.completions.create(
+                model=self.model_name,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=self.temperature,
+                top_p=1,
+                max_tokens=self.max_tokens,
+                stream=False,
+            )
+            reasoning = getattr(completion.choices[0].message, "reasoning_content", None)
+            if reasoning:
+                LOGGER.info("NVIDIA Build API reasoning trace: %s", reasoning[:200])
 
-        inputs = self.tokenizer(prompt, return_tensors="pt")
-
-        output_tokens = _gpu_generate_wrapper(
-            self.model,
-            self.tokenizer,
-            inputs,
-            self.max_new_tokens,
-            self.temperature,
-        )
-
-        input_length = inputs["input_ids"].shape[1]
-        generated_tokens = output_tokens[0][input_length:]
-        text = self.tokenizer.decode(generated_tokens, skip_special_tokens=True)
-        return text
+            content = completion.choices[0].message.content
+            if content and content.strip():
+                return content.strip()
+            raise RuntimeError("NVIDIA Build API returned empty response content.")
+        except Exception as exc:
+            LOGGER.error("NVIDIA Build API call failed: %s", exc)
+            raise exc
