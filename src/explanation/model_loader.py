@@ -25,6 +25,9 @@ class SLMModelLoader:
         max_new_tokens: int | None = None,
         temperature: float | None = None,
     ):
+        if os.getenv("NVIDIA_API_KEY") and os.getenv("NVIDIA_API_KEY").strip():
+            if not model_name or "Qwen" in model_name:
+                model_name = os.getenv("NVIDIA_MODEL", "openai/gpt-oss-20b")
         self.model_name = model_name or os.getenv("NVIDIA_MODEL", "openai/gpt-oss-20b")
         self.max_tokens = max_new_tokens or int(os.getenv("SLM_MAX_TOKENS", "4096"))
         self.temperature = temperature or float(os.getenv("SLM_TEMPERATURE", "1.0"))

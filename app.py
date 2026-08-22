@@ -75,8 +75,8 @@ LOGGER = logging.getLogger("razorshield-app")
 # =============================================================================
 
 SLM_MODEL_NAME = os.getenv(
-    "SLM_MODEL",
-    "Qwen/Qwen2.5-0.5B-Instruct",
+    "NVIDIA_MODEL",
+    os.getenv("SLM_MODEL", "openai/gpt-oss-20b"),
 )
 
 POLICY_MODE_DEFAULT = os.getenv(
