@@ -86,10 +86,27 @@ export default function SLMChatDrawer({ data }: Props) {
       const res = await explainEvidencePayload(JSON.stringify(evidenceContext));
       const latency = Math.round(performance.now() - start);
 
-      const replyText =
-        res?.summary ||
-        res?.explanation?.summary ||
-        (typeof res === "string" ? res : JSON.stringify(res, null, 2));
+      const expObj = res?.explanation || (res?.title ? res : null);
+      let replyText = "";
+
+      if (expObj && expObj.summary) {
+        replyText = expObj.summary;
+        if (expObj.recommended_action) {
+          replyText += `\n\n📌 Recommended Action: ${expObj.recommended_action}`;
+        }
+        if (expObj.key_signals && Array.isArray(expObj.key_signals) && expObj.key_signals.length > 0) {
+          replyText += `\n\n🔑 Key Signals:\n• ` + expObj.key_signals.join("\n• ");
+        }
+      } else if (typeof res === "string") {
+        replyText = res;
+      } else if (res?.error) {
+        replyText = `Error: ${res.error}${res.details ? ` (${res.details})` : ""}`;
+      } else {
+        replyText =
+          typeof res === "object"
+            ? JSON.stringify(res, null, 2)
+            : "RAZOR assistant evaluated the structured risk evidence.";
+      }
 
       const slmMsg: ChatMessage = {
         id: Math.random().toString(),
@@ -182,7 +199,7 @@ export default function SLMChatDrawer({ data }: Props) {
                 </div>
 
                 <div
-                  className={`p-3 max-w-[88%] text-[11px] leading-relaxed border ${
+                  className={`p-3 max-w-[88%] text-[11px] leading-relaxed border whitespace-pre-wrap ${
                     msg.sender === "user"
                       ? "bg-brand-red/10 border-brand-red/40 text-white"
                       : "bg-brand-dark border-brand-border/60 text-brand-muted"
