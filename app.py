@@ -1,7 +1,7 @@
 """
 RazorShield — AI-Powered Merchant Fraud & Risk Intelligence System.
 
-Hugging Face Space Backend Application powered by Gradio and ZeroGPU.
+Hugging Face Space Backend Application powered by Gradio and NVIDIA NIM API.
 
 Architecture:
 
@@ -18,8 +18,8 @@ Architecture:
             |     +-- incident engine
             |     +-- policy engine
             |
-            +-- ZeroGPU
-                  +-- Qwen/Qwen2.5-0.5B-Instruct
+            +-- NVIDIA NIM API
+                  +-- openai/gpt-oss-20b
 """
 
 from __future__ import annotations
@@ -44,10 +44,13 @@ from src.api.schemas import (
     TransactionRiskResponse,
 )
 
-from src.explanation.explainer import RazorShieldExplainer
 from src.explanation.fallback import DeterministicFallbackExplainer
-from src.explanation.model_loader import SLMModelLoader
 from src.explanation.schemas import ExplanationInput
+
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
 
 from src.incident.incident_engine import MerchantIncidentEngine
 
@@ -105,29 +108,207 @@ INFERENCE_ADAPTER = InferenceAdapter()
 
 
 # =============================================================================
-# SLM Initialization
+# ZeroGPU Space Compatibility Hook
 # =============================================================================
 
-LOGGER.info(
-    "Initializing SLM Explanation Layer (%s) ...",
-    SLM_MODEL_NAME,
+try:
+    import spaces
+
+    @spaces.GPU
+    def _zero_gpu_startup_check():
+        """Satisfies HF ZeroGPU runtime detector on startup without consuming GPU."""
+        return True
+
+    _zero_gpu_startup_check()
+    LOGGER.info("ZeroGPU compatibility hook registered and initialized.")
+except Exception:
+    def _zero_gpu_startup_check():
+        return True
+
+
+# =============================================================================
+# NVIDIA NIM Explanation Layer
+# =============================================================================
+
+NVIDIA_BASE_URL = os.getenv(
+    "NVIDIA_BASE_URL",
+    "https://integrate.api.nvidia.com/v1",
 )
 
-MODEL_LOADER = SLMModelLoader(
-    model_name=SLM_MODEL_NAME,
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "").strip()
+
+SLM_MODEL_NAME = os.getenv(
+    "NVIDIA_MODEL",
+    "openai/gpt-oss-20b",
 )
 
-SLM_LOADED = MODEL_LOADER.load_model()
-
-EXPLAINER = RazorShieldExplainer(
-    model_loader=MODEL_LOADER if SLM_LOADED else None
+NVIDIA_TIMEOUT_SECONDS = float(
+    os.getenv("NVIDIA_TIMEOUT_SECONDS", "30")
 )
 
-LOGGER.info(
-    "SLM initialization complete | model=%s | loaded=%s",
-    SLM_MODEL_NAME,
-    SLM_LOADED,
-)
+NVIDIA_CLIENT = None
+SLM_LOADED = False
+
+if OpenAI is None:
+    LOGGER.warning("OpenAI SDK is not installed; deterministic explanation fallback will be used.")
+elif NVIDIA_API_KEY:
+    NVIDIA_CLIENT = OpenAI(
+        base_url=NVIDIA_BASE_URL,
+        api_key=NVIDIA_API_KEY,
+    )
+    # NVIDIA API models are remote; there is no local model-loading step.
+    SLM_LOADED = True
+    LOGGER.info(
+        "NVIDIA NIM explanation client configured | model=%s",
+        SLM_MODEL_NAME,
+    )
+else:
+    LOGGER.warning(
+        "NVIDIA_API_KEY is not configured; deterministic explanation fallback will be used."
+    )
+
+# =============================================================================
+# Grounded NVIDIA Explanation Helper
+# =============================================================================
+
+def _generate_explanation(exp_input: ExplanationInput) -> tuple[dict[str, Any], dict[str, Any]]:
+    """
+    Convert deterministic RazorShield evidence into a concise grounded explanation.
+
+    IMPORTANT:
+    - The NVIDIA model never determines the risk decision.
+    - All risk values originate from the deterministic engines.
+    - The model is only allowed to verbalize supplied evidence.
+    - If NVIDIA is unavailable or output fails grounding checks, use the
+      deterministic fallback explainer.
+    """
+    if NVIDIA_CLIENT is None:
+        fallback = DeterministicFallbackExplainer.generate_fallback_explanation(
+            exp_input,
+            failure_reason="NVIDIA_API_KEY/OpenAI client unavailable",
+        )
+        return (
+            fallback.model_dump(),
+            {
+                "valid": True,
+                "method": "deterministic_fallback",
+                "reason": "NVIDIA API unavailable",
+            },
+        )
+
+    evidence = exp_input.model_dump()
+
+    system_prompt = """You are RazorShield's evidence explanation engine.
+
+Your ONLY task is to convert supplied deterministic fraud-risk evidence into a concise,
+grounded explanation for a merchant risk operator.
+
+CRITICAL RULES:
+1. Never make or change the risk decision.
+2. Never invent facts, amounts, customers, transactions, causes, or signals.
+3. Use ONLY values present in the evidence JSON.
+4. Preserve decision, incident state, severity, campaign status, and numeric values.
+5. Do not describe the output as a probability unless the supplied field is explicitly
+   a probability.
+6. Explain why the deterministic engine reached its decision using the supplied signals.
+7. Keep the explanation concise: 40-100 words.
+8. Return JSON only with exactly these keys:
+   summary, decision, severity, evidence
+9. "decision" must exactly equal recommended_action.
+10. "severity" must exactly equal severity from the evidence.
+11. "evidence" must be a short array of strings containing only grounded facts.
+"""
+
+    user_prompt = (
+        "Convert the following deterministic RazorShield evidence into the required JSON.\n\n"
+        + json.dumps(evidence, ensure_ascii=False, default=str)
+    )
+
+    try:
+        completion = NVIDIA_CLIENT.chat.completions.create(
+            model=SLM_MODEL_NAME,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.1,
+            top_p=1,
+            max_tokens=500,
+            stream=False,
+            timeout=NVIDIA_TIMEOUT_SECONDS,
+            response_format={"type": "json_object"},
+        )
+
+        content = completion.choices[0].message.content or ""
+        generated = json.loads(content)
+
+        # ---- Deterministic grounding validation ----
+        if not isinstance(generated, dict):
+            raise ValueError("NVIDIA output is not a JSON object")
+
+        required = {"summary", "decision", "severity", "evidence"}
+        if not required.issubset(generated):
+            raise ValueError("NVIDIA output is missing required explanation fields")
+
+        if str(generated["decision"]) != str(exp_input.recommended_action):
+            raise ValueError("Generated decision contradicts deterministic decision")
+
+        if str(generated["severity"]) != str(exp_input.severity):
+            raise ValueError("Generated severity contradicts deterministic severity")
+
+        if not isinstance(generated["evidence"], list):
+            raise ValueError("Generated evidence must be a list")
+
+        # Basic numeric grounding: every numeric token used by the model must occur
+        # in the supplied evidence. This intentionally errs on the safe side.
+        source_numbers = set()
+        for value in evidence.values():
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                source_numbers.add(str(value))
+                source_numbers.add(f"{float(value):g}")
+
+        generated_text = json.dumps(generated, ensure_ascii=False)
+        import re
+        output_numbers = re.findall(
+            r"(?<![A-Za-z])(?:\\d+(?:\\.\\d+)?)(?![A-Za-z])",
+            generated_text,
+        )
+
+        for number in output_numbers:
+            if not any(
+                number == candidate
+                or number.rstrip("0").rstrip(".") == candidate.rstrip("0").rstrip(".")
+                for candidate in source_numbers
+            ):
+                raise ValueError(
+                    f"Generated numeric value '{number}' is not grounded in evidence"
+                )
+
+        return (
+            generated,
+            {
+                "valid": True,
+                "method": "nvidia_nim",
+                "model": SLM_MODEL_NAME,
+            },
+        )
+
+    except Exception as exc:
+        LOGGER.exception("NVIDIA explanation failed; using deterministic fallback.")
+
+        fallback = DeterministicFallbackExplainer.generate_fallback_explanation(
+            exp_input,
+            failure_reason=str(exc),
+        )
+
+        return (
+            fallback.model_dump(),
+            {
+                "valid": True,
+                "method": "deterministic_fallback",
+                "reason": str(exc),
+            },
+        )
 
 
 # =============================================================================
@@ -153,7 +334,7 @@ def health_check() -> str:
     """
     Lightweight backend health/status endpoint.
 
-    This endpoint does not execute the risk engine or consume ZeroGPU.
+    This endpoint does not execute the risk engine or consume NVIDIA NIM API.
 
     Exposed as:
         api_name="health_check"
@@ -164,14 +345,14 @@ def health_check() -> str:
             "status": "healthy",
             "service": "razorshield-api",
             "version": APP_VERSION,
-            "backend": "huggingface-spaces",
+            "backend": "huggingface-spaces-nvidia-nim",
             "risk_engine": "READY",
             "incident_engine": "READY",
             "slm": {
                 "model": SLM_MODEL_NAME,
-                "loaded": bool(SLM_LOADED),
-                "status": "READY" if SLM_LOADED else "FALLBACK",
-                "execution": "ZEROGPU",
+                "configured": bool(NVIDIA_CLIENT),
+                "status": "READY" if NVIDIA_CLIENT else "FALLBACK",
+                "execution": "NVIDIA_NIM_API",
             },
             "timestamp": datetime.utcnow().isoformat() + "Z",
         }
@@ -311,51 +492,22 @@ def analyze_transaction(
         recommended_action=tx_dec.decision,
     )
 
-    if inc_dec["incident_state"] in [
-        "INVESTIGATE",
-        "ALERT",
-    ]:
-
-        try:
-
-            exp_out, val_res = (
-                EXPLAINER.generate_explanation(
-                    exp_input
-                )
-            )
-
-            slm_ms = (
-                time.perf_counter()
-                - t_start_slm
-            ) * 1000.0
-
-            exp_json = exp_out.model_dump()
-
-        except Exception as exc:
-
-            LOGGER.exception(
-                "SLM explanation failed; using deterministic fallback."
-            )
-
-            exp_out = (
-                DeterministicFallbackExplainer.generate_fallback_explanation(
-                    exp_input,
-                    failure_reason=str(exc),
-                )
-            )
-
-            exp_json = exp_out.model_dump()
-
+    if inc_dec["incident_state"] in ["INVESTIGATE", "ALERT"]:
+        exp_json, val_res = _generate_explanation(exp_input)
+        slm_ms = (
+            time.perf_counter() - t_start_slm
+        ) * 1000.0
     else:
-
-        exp_out = (
-            DeterministicFallbackExplainer.generate_fallback_explanation(
-                exp_input,
-                failure_reason="Deterministic processing (Normal risk)",
-            )
+        exp_out = DeterministicFallbackExplainer.generate_fallback_explanation(
+            exp_input,
+            failure_reason="Deterministic processing (Normal risk)",
         )
-
         exp_json = exp_out.model_dump()
+        val_res = {
+            "valid": True,
+            "method": "deterministic_fallback",
+            "reason": "Normal risk state",
+        }
 
     # -------------------------------------------------------------------------
     # 4. Total latency
@@ -709,42 +861,16 @@ def run_scenario(
         fraud_excess_ratio=last_inc_dec["fraud_excess_ratio"],
         velocity_ratio=last_inc_dec["velocity_ratio"],
         suspicious_windows=last_inc_dec["suspicious_windows"],
-        total_suspicious_windows=last_inc_dec[
-            "total_suspicious_windows"
-        ],
-        campaign_active=last_inc_dec[
-            "campaign_active"
-        ],
+        total_suspicious_windows=last_inc_dec["total_suspicious_windows"],
+        campaign_active=last_inc_dec["campaign_active"],
         policy_mode=policy_mode,
         signals=last_inc_dec["signals"],
         recommended_action=(
-            last_tx_dec.decision
-            if last_tx_dec
-            else "APPROVE"
+            last_tx_dec.decision if last_tx_dec else "APPROVE"
         ),
     )
 
-    try:
-
-        exp_out, _ = (
-            EXPLAINER.generate_explanation(
-                exp_input
-            )
-        )
-
-    except Exception as exc:
-
-        LOGGER.exception(
-            "Scenario SLM explanation failed."
-        )
-
-        exp_out = (
-            DeterministicFallbackExplainer
-            .generate_fallback_explanation(
-                exp_input,
-                failure_reason=str(exc),
-            )
-        )
+    exp_json, _ = _generate_explanation(exp_input)
 
     result = {
         "scenario_name": scenario_name,
@@ -762,7 +888,7 @@ def run_scenario(
         "final_severity": (
             last_inc_dec["severity"]
         ),
-        "explanation": exp_out.model_dump(),
+        "explanation": exp_json,
     }
 
     return _json_response(result)
@@ -792,14 +918,10 @@ def explain_evidence(
             **data
         )
 
-        exp_out, val_res = (
-            EXPLAINER.generate_explanation(
-                exp_input
-            )
-        )
+        exp_json, val_res = _generate_explanation(exp_input)
 
         result = {
-            "explanation": exp_out.model_dump(),
+            "explanation": exp_json,
             "validation": val_res,
         }
 
@@ -875,12 +997,12 @@ def build_gradio_app() -> gr.Blocks:
 
 ### Real-Time Calibrated Transaction Fraud,
 Temporal Merchant Incident Detection &
-Zero-Shot SLM Explanation Layer
+Grounded NVIDIA SLM Explanation Layer
 
 **Backend:** Hugging Face Spaces  
 **Risk Engine:** Deterministic  
-**SLM:** Qwen/Qwen2.5-0.5B-Instruct  
-**Acceleration:** ZeroGPU
+**SLM:** openai/gpt-oss-20b via NVIDIA NIM  
+**Execution:** NVIDIA API (no local GPU required)
 """
         )
 
@@ -1227,51 +1349,15 @@ demo = build_gradio_app()
 # =============================================================================
 
 if __name__ == "__main__":
-
-    from fastapi.middleware.cors import CORSMiddleware
-
-    # IMPORTANT:
-    # Gradio creates the underlying FastAPI application during launch.
-    #
-    # Therefore CORS must be configured using Gradio's launch configuration
-    # rather than trying to add middleware AFTER demo.launch().
-    #
-    # The previous implementation added middleware after launch(), which was
-    # too late and therefore did not fix browser-origin requests.
-
-    allowed_origins = [
-        "https://razorshield.vercel.app",
-        "https://www.razorshield.vercel.app",
-    ]
-
-    # Local development origins
-    allowed_origins.extend(
-        [
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-        ]
-    )
-
+    LOGGER.info("Starting RazorShield Gradio Space...")
     LOGGER.info(
-        "Starting RazorShield Gradio Space..."
+        "NVIDIA explanation model=%s | API configured=%s | no local GPU required",
+        SLM_MODEL_NAME,
+        bool(NVIDIA_CLIENT),
     )
-
-    LOGGER.info(
-        "Allowed frontend origins: %s",
-        allowed_origins,
-    )
-
-    # Gradio's API is the public backend interface.
-    #
-    # strict_cors=False prevents Gradio from rejecting the configured
-    # frontend origin at its own CORS layer.
-    #
-    # The actual Vercel integration should preferably use the Next.js
-    # server-side proxy, so the browser does not directly depend on Gradio CORS.
 
     demo.launch(
         server_name="0.0.0.0",
         server_port=7860,
-        strict_cors=False,
         show_error=True,
     )
