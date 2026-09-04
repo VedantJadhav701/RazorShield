@@ -23,16 +23,16 @@ export default function SystemStatusBar({
   const isOffline = health.status === "OFFLINE";
 
   const statusBg = isConnected
-    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+    ? "bg-emerald-50 border-emerald-200 text-emerald-700"
     : isOffline
-    ? "bg-brand-red/10 border-brand-red/30 text-brand-red"
-    : "bg-amber-500/10 border-amber-500/30 text-amber-400";
+    ? "bg-rose-50 border-rose-200 text-rose-700"
+    : "bg-amber-50 border-amber-200 text-amber-700";
 
   return (
-    <div className="bg-brand-black border border-brand-border p-4 font-mono text-xs space-y-3">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-brand-border/60 pb-3">
-        <div className="flex items-center space-x-3">
-          <div className={`inline-flex items-center space-x-1.5 border px-3 py-1 font-bold ${statusBg}`}>
+    <div className="bg-background border border-border p-4 font-mono text-xs space-y-3 rounded-xl shadow-sm">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-border pb-3">
+        <div className="flex items-center space-x-3 flex-wrap gap-2">
+          <div className={`inline-flex items-center space-x-1.5 border px-3 py-1 font-bold rounded-full ${statusBg}`}>
             {isOffline ? (
               <AlertOctagon className="w-3.5 h-3.5" />
             ) : (
@@ -41,14 +41,14 @@ export default function SystemStatusBar({
             <span>BACKEND: {health.status}</span>
           </div>
 
-          <div className="inline-flex items-center space-x-1.5 border border-brand-border bg-brand-dark px-3 py-1 text-white">
-            <Activity className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="inline-flex items-center space-x-1.5 border border-border bg-secondary/50 px-3 py-1 text-foreground rounded-full">
+            <Activity className="w-3.5 h-3.5 text-emerald-600" />
             <span>RISK ENGINE: ONLINE</span>
           </div>
 
-          <div className="inline-flex items-center space-x-1.5 border border-brand-border bg-brand-dark px-3 py-1 text-white">
-            <Cpu className="w-3.5 h-3.5 text-brand-red" />
-            <span>SLM: NVIDIA gpt-oss-20b</span>
+          <div className="inline-flex items-center space-x-1.5 border border-border bg-secondary/50 px-3 py-1 text-foreground rounded-full">
+            <Cpu className="w-3.5 h-3.5 text-accent" />
+            <span>SLM: NVIDIA GPT-5 SLM</span>
           </div>
         </div>
 
@@ -56,7 +56,7 @@ export default function SystemStatusBar({
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="inline-flex items-center space-x-1.5 border border-brand-border hover:border-white text-brand-muted hover:text-white px-3 py-1 transition-colors"
+            className="inline-flex items-center space-x-1.5 border border-border hover:border-accent text-muted-foreground hover:text-foreground px-3 py-1.5 transition-colors rounded-lg bg-secondary/30"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
             <span>PROBE BACKEND</span>
@@ -65,24 +65,24 @@ export default function SystemStatusBar({
       </div>
 
       {/* Dynamic Metadata Provenance Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px] text-brand-muted">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px] text-muted-foreground">
         <div>
           <span>ENDPOINT: </span>
-          <span className="text-white font-semibold">{health.endpoint.replace("https://", "")}</span>
+          <span className="text-foreground font-semibold">{health.endpoint.replace("https://", "")}</span>
         </div>
         <div>
           <span>LAST SYNC: </span>
-          <span className="text-white font-semibold">
+          <span className="text-foreground font-semibold">
             {health.last_sync_at ? new Date(health.last_sync_at).toLocaleTimeString() : "—"}
           </span>
         </div>
         <div>
           <span>LAST OPERATION: </span>
-          <span className="text-white font-semibold">{lastOperation}</span>
+          <span className="text-foreground font-semibold">{lastOperation}</span>
         </div>
         <div>
           <span>ROUNDTRIP LATENCY: </span>
-          <span className="text-white font-semibold">
+          <span className="text-foreground font-semibold">
             {lastMeta ? `${lastMeta.roundtrip_latency_ms} ms` : health.roundtrip_latency_ms ? `${health.roundtrip_latency_ms} ms` : "—"}
           </span>
         </div>

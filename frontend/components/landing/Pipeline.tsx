@@ -9,17 +9,17 @@ export default function Pipeline() {
     { title: "FRAUD EXCESS", desc: "Deployable Signal Extraction" },
     { title: "INCIDENT PERSISTENCE", desc: "N=2 Window Anomaly Counter" },
     { title: "RISK DECISION", desc: "APPROVE / VERIFY / ALERT" },
-    { title: "SLM EXPLANATION", desc: "Qwen2.5-0.5B Zero-Shot Output" },
+    { title: "SLM EXPLANATION", desc: "NVIDIA GPT-5 SLM Output" },
   ];
 
   return (
-    <section className="bg-brand-black border-b border-brand-border/60 py-20">
+    <section className="bg-background border-b border-border py-20 font-body">
       <div className="max-w-7xl mx-auto px-6">
         <div className="mb-12">
-          <span className="font-mono text-xs text-brand-red tracking-widest uppercase">
+          <span className="font-mono text-xs text-accent tracking-widest uppercase">
             // TECHNICAL ARCHITECTURE
           </span>
-          <h3 className="font-sans font-bold text-2xl sm:text-4xl text-white tracking-tight mt-2">
+          <h3 className="font-display text-3xl sm:text-4xl text-foreground tracking-tight mt-2">
             Multi-Layer Risk Pipeline
           </h3>
         </div>
@@ -29,21 +29,21 @@ export default function Pipeline() {
           {steps.map((step, idx) => (
             <div
               key={idx}
-              className="bg-brand-dark border border-brand-border p-4 flex flex-col justify-between relative group hover:border-brand-red/60 transition-colors"
+              className="bg-secondary/40 border border-border p-4 flex flex-col justify-between relative group hover:border-accent/60 transition-colors rounded-xl shadow-sm"
             >
               <div>
-                <span className="font-mono text-[10px] text-brand-red font-bold block mb-2">
+                <span className="font-mono text-[10px] text-accent font-bold block mb-2">
                   0{idx + 1}
                 </span>
-                <span className="font-mono text-xs font-bold text-white tracking-wider block mb-2">
+                <span className="font-mono text-xs font-bold text-foreground tracking-wider block mb-2">
                   {step.title}
                 </span>
-                <span className="font-mono text-[11px] text-brand-muted block">
+                <span className="font-body text-[11px] text-muted-foreground block">
                   {step.desc}
                 </span>
               </div>
               {idx < steps.length - 1 && (
-                <div className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2 z-10 text-brand-border group-hover:text-brand-red transition-colors">
+                <div className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2 z-10 text-border group-hover:text-accent transition-colors">
                   <ArrowRight className="w-4 h-4" />
                 </div>
               )}

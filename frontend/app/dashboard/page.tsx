@@ -115,35 +115,16 @@ export default function DashboardPage() {
     }
   };
 
-  const handleReset = async () => {
-    setIsLoading(true);
-    setLastOperation("reset_demo_state");
-    addLog("REQUEST_SENT", "reset_demo_state", "Sending reset demo state signal to backend...");
-    try {
-      const res = await resetDemoState();
-      setResetMessage(res.message);
-      if (res.meta) {
-        setLastMeta(res.meta);
-        addLog("SYSTEM_RESET", "reset_demo_state", "Demo state reset complete", undefined, res.meta.roundtrip_latency_ms);
-      }
-      setAnalysisData(null);
-    } catch (err) {
-      console.error("Reset error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <div className="bg-brand-black min-h-[calc(100vh-80px)] py-10">
+    <div className="bg-secondary/30 min-h-[calc(100vh-80px)] py-10 font-body">
       <div className="max-w-7xl mx-auto px-6 space-y-8">
         {/* Title Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="font-sans font-bold text-3xl text-white tracking-tight">
+            <h1 className="font-display font-bold text-3xl sm:text-4xl text-foreground tracking-tight">
               RazorShield Operations Console
             </h1>
-            <p className="font-mono text-xs text-brand-muted mt-1">
+            <p className="font-body text-xs text-muted-foreground mt-1">
               Live Merchant Risk Monitoring & Real-Time Incident Intelligence Stream
             </p>
           </div>
@@ -159,7 +140,7 @@ export default function DashboardPage() {
         />
 
         {resetMessage && (
-          <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-xs p-3">
+          <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 font-mono text-xs p-3 rounded-lg">
             {resetMessage}
           </div>
         )}

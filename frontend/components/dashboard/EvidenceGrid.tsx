@@ -58,8 +58,8 @@ export default function EvidenceGrid({ data }: Props) {
   ];
 
   return (
-    <div className="bg-brand-black border border-brand-border p-6">
-      <div className="font-mono text-xs text-brand-red tracking-widest uppercase mb-4">
+    <div className="bg-background border border-border p-6 rounded-xl shadow-sm font-body">
+      <div className="font-mono text-xs text-accent tracking-widest uppercase font-semibold mb-4">
         // STRUCTURED RISK EVIDENCE
       </div>
 
@@ -67,22 +67,22 @@ export default function EvidenceGrid({ data }: Props) {
         {items.map((item, idx) => (
           <div
             key={idx}
-            className={`bg-brand-dark border p-4 font-mono text-xs flex flex-col justify-between space-y-2 ${
+            className={`p-4 text-xs flex flex-col justify-between space-y-2 rounded-lg border transition-all ${
               item.isElevated
-                ? "border-brand-red/60 text-brand-red"
-                : "border-brand-border/60 text-white"
+                ? "bg-rose-50 border-rose-200 text-rose-700 font-semibold"
+                : "bg-secondary/40 border-border text-foreground font-medium"
             }`}
           >
             <div>
-              <span className="text-brand-muted text-[10px] block uppercase font-bold mb-1">
+              <span className="text-muted-foreground text-[10px] block uppercase font-bold mb-1 font-mono">
                 {item.label}
               </span>
-              <span className="text-2xl font-bold font-sans tracking-tight block">
+              <span className="text-2xl font-bold font-display tracking-tight block">
                 {item.value}
               </span>
             </div>
 
-            <span className="text-brand-muted text-[10px] block border-t border-brand-border/40 pt-2">
+            <span className="text-muted-foreground text-[10px] block border-t border-border/60 pt-2 font-body">
               {item.desc}
             </span>
           </div>

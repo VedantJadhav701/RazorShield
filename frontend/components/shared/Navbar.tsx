@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Shield, ArrowRight, Menu, X } from "lucide-react";
+import { Menu, X, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Navbar() {
@@ -11,85 +11,86 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks = [
-    { href: "/", label: "PRODUCT" },
-    { href: "/dashboard", label: "DASHBOARD" },
-    { href: "/scenarios", label: "SCENARIOS" },
-    { href: "/evaluation", label: "EVALUATION" },
+    { href: "/", label: "Home" },
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/scenarios", label: "Scenarios" },
+    { href: "/evaluation", label: "Evaluation" },
+    { href: "#pricing", label: "Pricing" },
+    { href: "#about", label: "About" },
+    { href: "#contact", label: "Contact" },
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-brand-black/90 backdrop-blur-md border-b border-brand-border/60">
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        {/* Brand Mark */}
-        <Link href="/" className="flex items-center space-x-3 group">
-          <div className="w-9 h-9 bg-brand-red flex items-center justify-center text-white transition-transform group-hover:scale-105">
-            <Shield className="w-5 h-5 stroke-[2.5]" />
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/60">
+      <div className="flex items-center justify-between px-6 md:px-12 lg:px-20 py-5 font-body max-w-7xl mx-auto w-full">
+        {/* Left: Logo */}
+        <Link href="/" className="flex items-center space-x-2 group">
+          <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
+            N
           </div>
-          <div className="flex flex-col">
-            <span className="font-sans font-bold text-lg tracking-wider text-white leading-none">
-              RAZOR<span className="text-brand-red">SHIELD</span>
+          <div className="flex items-baseline space-x-1.5">
+            <span className="text-xl font-semibold tracking-tight text-foreground">
+              Nexora
             </span>
-            <span className="font-mono text-[10px] tracking-widest text-brand-muted uppercase mt-0.5">
-              Risk Intelligence
+            <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest hidden sm:inline-block">
+              / RazorShield
             </span>
           </div>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-8">
+        {/* Right (hidden on mobile): Nav links */}
+        <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
-                key={link.href}
+                key={link.label}
                 href={link.href}
                 className={cn(
-                  "font-mono text-xs tracking-widest uppercase transition-colors relative py-1",
-                  isActive ? "text-white font-semibold" : "text-brand-muted hover:text-white"
+                  "text-sm font-medium transition-colors font-body",
+                  isActive
+                    ? "text-foreground font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {link.label}
-                {isActive && (
-                  <span className="absolute bottom-0 left-0 w-full h-[2px] bg-brand-red" />
-                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Desktop CTA */}
-        <div className="hidden md:flex items-center">
+        {/* CTA Button & Mobile Toggle */}
+        <div className="flex items-center space-x-4">
           <Link
             href="/dashboard"
-            className="group relative inline-flex items-center space-x-2 bg-brand-red hover:bg-brand-red-hover text-white font-mono text-xs tracking-widest uppercase px-6 py-3 transition-colors rounded-none"
+            className="rounded-full px-5 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm font-body hidden sm:inline-flex items-center space-x-1.5"
           >
-            <span>LAUNCH RAZORSHIELD</span>
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            <span>Book a demo</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
-        </div>
 
-        {/* Mobile Burger Button */}
-        <button
-          type="button"
-          className="md:hidden text-white p-2"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Toggle Navigation"
-        >
-          {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+          <button
+            type="button"
+            className="md:hidden text-foreground p-2 rounded-lg hover:bg-secondary"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle Navigation"
+          >
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
-      {/* Mobile Burger Menu Overlay */}
+      {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-x-0 top-20 bg-brand-dark/95 backdrop-blur-xl border-b border-brand-border p-6 flex flex-col space-y-6">
+        <div className="md:hidden border-b border-border bg-background px-6 py-4 flex flex-col space-y-3 font-body shadow-lg animate-in slide-in-from-top-2">
           {navLinks.map((link) => (
             <Link
-              key={link.href}
+              key={link.label}
               href={link.href}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                "font-mono text-sm tracking-widest uppercase py-2 border-b border-brand-border/40",
-                pathname === link.href ? "text-brand-red font-bold" : "text-white"
+                "text-sm font-medium py-2 text-muted-foreground hover:text-foreground",
+                pathname === link.href && "text-foreground font-semibold"
               )}
             >
               {link.label}
@@ -98,10 +99,9 @@ export default function Navbar() {
           <Link
             href="/dashboard"
             onClick={() => setMobileOpen(false)}
-            className="w-full bg-brand-red text-center text-white font-mono text-xs tracking-widest uppercase py-4 flex items-center justify-center space-x-2 rounded-none"
+            className="w-full rounded-full px-5 py-2.5 text-center text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm mt-2 block"
           >
-            <span>LAUNCH RAZORSHIELD</span>
-            <ArrowRight className="w-4 h-4" />
+            Book a demo
           </Link>
         </div>
       )}

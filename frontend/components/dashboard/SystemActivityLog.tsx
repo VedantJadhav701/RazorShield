@@ -10,19 +10,19 @@ interface Props {
 
 export default function SystemActivityLog({ logs }: Props) {
   return (
-    <div className="bg-brand-black border border-brand-border p-6 font-mono text-xs space-y-4">
-      <div className="flex items-center justify-between border-b border-brand-border/60 pb-3">
-        <div className="flex items-center space-x-2 text-brand-red font-bold uppercase tracking-widest">
+    <div className="bg-background border border-border p-6 font-mono text-xs space-y-4 rounded-xl shadow-sm">
+      <div className="flex items-center justify-between border-b border-border pb-3">
+        <div className="flex items-center space-x-2 text-accent font-bold uppercase tracking-widest">
           <Activity className="w-4 h-4" />
           <span>SYSTEM ACTIVITY LOG (LIVE TRACE)</span>
         </div>
-        <span className="text-[10px] text-brand-muted uppercase">
+        <span className="text-[10px] text-muted-foreground uppercase">
           Real Backend Request Lifecycle
         </span>
       </div>
 
       {logs.length === 0 ? (
-        <div className="text-brand-muted text-[11px] py-4 text-center">
+        <div className="text-muted-foreground text-[11px] py-4 text-center">
           No requests recorded in current session. Submit a transaction or scenario to trace execution.
         </div>
       ) : (
@@ -30,24 +30,24 @@ export default function SystemActivityLog({ logs }: Props) {
           {logs.map((log) => (
             <div
               key={log.id}
-              className={`p-2 border text-[11px] flex items-center justify-between ${
+              className={`p-2.5 rounded-lg border text-[11px] flex items-center justify-between ${
                 log.is_error
-                  ? "bg-brand-red/10 border-brand-red/40 text-brand-red"
-                  : "bg-brand-dark border-brand-border/60 text-brand-muted"
+                  ? "bg-rose-50 border-rose-200 text-rose-700 font-semibold"
+                  : "bg-secondary/40 border-border text-foreground"
               }`}
             >
               <div className="flex items-center space-x-3">
-                <span className="text-white font-semibold">
+                <span className="text-foreground font-semibold">
                   {new Date(log.timestamp).toLocaleTimeString()}
                 </span>
-                <span className="text-brand-red uppercase font-bold">
+                <span className="text-accent uppercase font-bold">
                   [{log.event_type}]
                 </span>
-                <span className="text-white">{log.summary}</span>
+                <span className="text-foreground font-medium">{log.summary}</span>
               </div>
 
               {log.latency_ms !== undefined && (
-                <span className="text-emerald-400 font-bold">
+                <span className="text-emerald-600 font-bold">
                   {log.latency_ms} ms
                 </span>
               )}

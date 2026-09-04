@@ -9,33 +9,33 @@ export default function TrustProof() {
   ];
 
   return (
-    <section className="bg-brand-dark border-b border-brand-border/60 py-20">
+    <section className="bg-background border-b border-border py-20 font-body">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12">
           <div>
-            <span className="font-mono text-xs text-brand-red tracking-widest uppercase">
+            <span className="font-mono text-xs text-accent tracking-widest uppercase">
               // EMPIRICAL PROOF
             </span>
-            <h3 className="font-sans font-bold text-2xl sm:text-4xl text-white tracking-tight mt-2">
+            <h3 className="font-display text-3xl sm:text-4xl text-foreground tracking-tight mt-2">
               Verified Risk Engine Performance
             </h3>
           </div>
-          <span className="font-mono text-xs text-brand-muted border border-brand-border px-3 py-1 mt-4 sm:mt-0">
+          <span className="font-mono text-xs text-muted-foreground border border-border rounded-full px-3 py-1 mt-4 sm:mt-0 bg-secondary/50">
             Internal test-set benchmark
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {metrics.map((m, idx) => (
-            <div key={idx} className="bg-brand-black border border-brand-border p-6 flex flex-col justify-between">
-              <span className="font-sans font-bold text-4xl sm:text-5xl text-white tracking-tight mb-4">
+            <div key={idx} className="bg-secondary/30 border border-border p-6 flex flex-col justify-between rounded-xl shadow-sm">
+              <span className="font-display font-bold text-4xl sm:text-5xl text-foreground tracking-tight mb-4">
                 {m.value}
               </span>
               <div>
-                <span className="font-mono text-xs font-bold text-white tracking-widest uppercase block mb-1">
+                <span className="font-mono text-xs font-bold text-foreground tracking-widest uppercase block mb-1">
                   {m.label}
                 </span>
-                <span className="font-mono text-[11px] text-brand-muted block">
+                <span className="font-body text-[11px] text-muted-foreground block">
                   {m.sub}
                 </span>
               </div>

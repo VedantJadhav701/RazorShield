@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Play, Square, Loader2, Radio } from "lucide-react";
+import { Play, Square, Radio } from "lucide-react";
 import { analyzeTransaction } from "@/lib/api";
 import { AnalyzeTransactionResponse } from "@/lib/types";
 import { formatFixed, formatPercent } from "@/lib/utils";
@@ -84,10 +84,10 @@ export default function LiveStreamControls({ onTransactionAnalyzed }: Props) {
   };
 
   return (
-    <div className="bg-brand-black border border-brand-border p-6 font-mono text-xs space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-brand-border/60 pb-3">
-        <div className="flex items-center space-x-2 text-brand-red font-bold uppercase tracking-widest">
-          <Radio className={`w-4 h-4 ${isStreaming ? "animate-pulse text-brand-red" : ""}`} />
+    <div className="bg-background border border-border p-6 font-body text-xs space-y-4 rounded-xl shadow-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-3">
+        <div className="flex items-center space-x-2 text-accent font-bold uppercase tracking-widest font-mono">
+          <Radio className={`w-4 h-4 ${isStreaming ? "animate-pulse text-accent" : ""}`} />
           <span>LIVE DEMO TRANSACTION STREAM</span>
         </div>
 
@@ -95,17 +95,17 @@ export default function LiveStreamControls({ onTransactionAnalyzed }: Props) {
           {!isStreaming ? (
             <button
               onClick={startStream}
-              className="bg-brand-red hover:bg-brand-red-hover text-white font-mono text-xs px-4 py-2 uppercase font-bold flex items-center space-x-2 transition-colors rounded-none"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-body text-xs font-medium px-4 py-2 uppercase tracking-wider flex items-center space-x-2 transition-all rounded-md shadow-sm"
             >
-              <Play className="w-3.5 h-3.5 fill-white" />
+              <Play className="w-3.5 h-3.5 fill-current" />
               <span>START DEMO STREAM</span>
             </button>
           ) : (
             <button
               onClick={stopStream}
-              className="bg-brand-dark border border-brand-red text-brand-red hover:bg-brand-red hover:text-white font-mono text-xs px-4 py-2 uppercase font-bold flex items-center space-x-2 transition-colors rounded-none"
+              className="bg-secondary border border-rose-200 text-rose-700 hover:bg-rose-50 font-body text-xs px-4 py-2 uppercase font-bold flex items-center space-x-2 transition-all rounded-md"
             >
-              <Square className="w-3.5 h-3.5 fill-brand-red hover:fill-white" />
+              <Square className="w-3.5 h-3.5 fill-rose-700" />
               <span>STOP STREAM</span>
             </button>
           )}
@@ -113,36 +113,36 @@ export default function LiveStreamControls({ onTransactionAnalyzed }: Props) {
       </div>
 
       {streamItems.length > 0 && (
-        <div className="space-y-2">
-          <div className="text-[10px] text-brand-muted uppercase mb-1">
+        <div className="space-y-2 font-mono">
+          <div className="text-[10px] text-muted-foreground uppercase mb-1">
             Real Backend Stream Log (Live Response Stream)
           </div>
           <div className="space-y-1">
             {streamItems.map((item) => (
               <div
                 key={item.id}
-                className="bg-brand-dark border border-brand-border/60 p-2 flex items-center justify-between text-[11px]"
+                className="bg-secondary/40 border border-border p-2.5 rounded-lg flex items-center justify-between text-[11px]"
               >
                 <div className="flex items-center space-x-3">
-                  <span className="text-brand-muted">{item.timestamp}</span>
-                  <span className="text-white font-semibold">{item.txId}</span>
-                  <span className="text-brand-muted">${formatFixed(item.amount, 2)}</span>
+                  <span className="text-muted-foreground">{item.timestamp}</span>
+                  <span className="text-foreground font-semibold">{item.txId}</span>
+                  <span className="text-muted-foreground">${formatFixed(item.amount, 2)}</span>
                 </div>
 
                 <div className="flex items-center space-x-3">
-                  <span className="text-brand-muted">P(fraud): {formatPercent(item.fraudProb)}</span>
+                  <span className="text-muted-foreground">P(fraud): {formatPercent(item.fraudProb)}</span>
                   <span
-                    className={`font-bold uppercase px-2 py-0.5 border ${
+                    className={`font-bold uppercase px-2 py-0.5 border rounded-full ${
                       item.action === "ALERT"
-                        ? "bg-brand-red/10 border-brand-red/40 text-brand-red"
+                        ? "bg-rose-50 border-rose-200 text-rose-700"
                         : item.action === "VERIFY"
-                        ? "bg-amber-400/10 border-amber-400/40 text-amber-400"
-                        : "bg-emerald-400/10 border-emerald-400/40 text-emerald-400"
+                        ? "bg-amber-50 border-amber-200 text-amber-700"
+                        : "bg-emerald-50 border-emerald-200 text-emerald-700"
                     }`}
                   >
                     {item.action}
                   </span>
-                  <span className="text-emerald-400 font-semibold">{item.latencyMs} ms</span>
+                  <span className="text-emerald-600 font-semibold">{item.latencyMs} ms</span>
                 </div>
               </div>
             ))}

@@ -1,23 +1,12 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/shared/Navbar";
 import Footer from "@/components/shared/Footer";
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space-grotesk",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
-});
-
 export const metadata: Metadata = {
-  title: "RazorShield — AI Merchant Risk Intelligence",
+  title: "Nexora / RazorShield — AI Automation & Risk Intelligence",
   description:
-    "Real-time calibrated transaction fraud, merchant incident detection, campaign-aware risk normalization, and zero-shot SLM explanations.",
+    "Automate your busywork with intelligent agents that learn, adapt, and execute. Real-time calibrated transaction fraud and merchant risk intelligence.",
 };
 
 export default function RootLayout({
@@ -26,8 +15,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
-      <body className="bg-brand-black text-white min-h-screen flex flex-col antialiased">
+    <html lang="en" className="light">
+      <body className="bg-background text-foreground min-h-screen flex flex-col antialiased selection:bg-accent/20 selection:text-accent">
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />

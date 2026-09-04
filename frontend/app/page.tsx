@@ -9,7 +9,7 @@ import FinalCTA from "@/components/landing/FinalCTA";
 
 export default function LandingPage() {
   return (
-    <div className="bg-brand-black min-h-screen">
+    <div className="bg-background min-h-screen text-foreground">
       <Hero />
       <InformationStrip />
       <CoreStatement />
