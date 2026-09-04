@@ -4,9 +4,9 @@ import Navbar from "@/components/shared/Navbar";
 import Footer from "@/components/shared/Footer";
 
 export const metadata: Metadata = {
-  title: "Nexora / RazorShield — AI Automation & Risk Intelligence",
+  title: "RazorShield — AI Merchant Risk & Fraud Intelligence",
   description:
-    "Automate your busywork with intelligent agents that learn, adapt, and execute. Real-time calibrated transaction fraud and merchant risk intelligence.",
+    "Real-time calibrated transaction fraud scoring, temporal merchant incident detection, campaign-aware risk normalization, and zero-shot SLM explanations.",
 };
 
 export default function RootLayout({

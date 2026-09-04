@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Navbar() {
@@ -15,25 +15,22 @@ export default function Navbar() {
     { href: "/dashboard", label: "Dashboard" },
     { href: "/scenarios", label: "Scenarios" },
     { href: "/evaluation", label: "Evaluation" },
-    { href: "#pricing", label: "Pricing" },
-    { href: "#about", label: "About" },
-    { href: "#contact", label: "Contact" },
   ];
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/60">
       <div className="flex items-center justify-between px-6 md:px-12 lg:px-20 py-5 font-body max-w-7xl mx-auto w-full">
         {/* Left: Logo */}
-        <Link href="/" className="flex items-center space-x-2 group">
-          <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
-            N
+        <Link href="/" className="flex items-center space-x-2.5 group">
+          <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+            <Shield className="w-4 h-4 text-white stroke-[2.5]" />
           </div>
           <div className="flex items-baseline space-x-1.5">
-            <span className="text-xl font-semibold tracking-tight text-foreground">
-              Nexora
+            <span className="text-xl font-semibold tracking-tight text-foreground font-body">
+              RazorShield
             </span>
             <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest hidden sm:inline-block">
-              / RazorShield
+              / AI Risk Engine
             </span>
           </div>
         </Link>
@@ -65,7 +62,7 @@ export default function Navbar() {
             href="/dashboard"
             className="rounded-full px-5 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm font-body hidden sm:inline-flex items-center space-x-1.5"
           >
-            <span>Book a demo</span>
+            <span>Launch Console</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
 
@@ -101,7 +98,7 @@ export default function Navbar() {
             onClick={() => setMobileOpen(false)}
             className="w-full rounded-full px-5 py-2.5 text-center text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm mt-2 block"
           >
-            Book a demo
+            Launch Console
           </Link>
         </div>
       )}

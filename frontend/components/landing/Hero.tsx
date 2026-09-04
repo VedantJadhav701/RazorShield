@@ -13,10 +13,10 @@ import {
   Settings,
   Sparkles,
   ArrowUpRight,
-  ArrowDownLeft,
-  CreditCard,
-  Building2,
-  DollarSign,
+  Shield,
+  Activity,
+  Cpu,
+  Layers,
 } from "lucide-react";
 
 export default function Hero() {
@@ -53,7 +53,7 @@ export default function Hero() {
             transition={{ duration: 0.5 }}
             className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-1.5 text-sm text-muted-foreground font-body shadow-sm mb-6"
           >
-            <span>Now with GPT-5 support</span>
+            <span>Powered by NVIDIA GPT-5 SLM</span>
             <Sparkles className="w-3.5 h-3.5 text-accent animate-pulse" />
           </motion.div>
 
@@ -64,7 +64,7 @@ export default function Hero() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-center font-display text-5xl md:text-6xl lg:text-[5rem] leading-[0.95] tracking-tight text-foreground max-w-xl"
           >
-            The Future of <span className="font-display italic font-normal">Smarter</span> Automation
+            The Future of <span className="font-display italic font-normal">Smarter</span> Risk Protection
           </motion.h1>
 
           {/* 3. Subheadline */}
@@ -74,7 +74,7 @@ export default function Hero() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mt-4 text-center text-base md:text-lg text-muted-foreground max-w-[650px] leading-relaxed font-body"
           >
-            Automate your busywork with intelligent agents that learn, adapt, and execute—so your team can focus on what matters most.
+            Detect persistent merchant fraud while separating real attacks from legitimate surges like flash sales and bulk orders—with zero false alarms.
           </motion.p>
 
           {/* 4. CTA Buttons */}
@@ -88,13 +88,13 @@ export default function Hero() {
               href="/dashboard"
               className="rounded-full px-6 py-2.5 text-sm font-medium font-body bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm flex items-center gap-2"
             >
-              <span>Book a demo</span>
+              <span>Launch Operations Console</span>
             </Link>
 
             <Link
               href="/scenarios"
               className="h-11 w-11 rounded-full border-0 bg-background shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:bg-background/80 flex items-center justify-center transition-all group"
-              aria-label="Play scenario preview video"
+              aria-label="Play interactive scenario replay engine"
             >
               <Play className="h-4 w-4 fill-foreground text-foreground group-hover:scale-110 transition-transform" />
             </Link>
@@ -126,27 +126,27 @@ export default function Hero() {
               <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-secondary/40">
                 <div className="flex items-center space-x-2">
                   <div className="w-5 h-5 rounded bg-primary text-primary-foreground flex items-center justify-center font-bold text-[10px]">
-                    N
+                    R
                   </div>
-                  <span className="font-semibold text-xs text-foreground">Nexora</span>
+                  <span className="font-semibold text-xs text-foreground">RazorShield</span>
                   <ChevronDown className="w-3 h-3 text-muted-foreground" />
                 </div>
 
                 {/* Search Bar */}
-                <div className="flex items-center space-x-2 bg-background border border-border rounded-md px-3 py-1 text-muted-foreground w-48 sm:w-64">
+                <div className="flex items-center space-x-2 bg-background border border-border rounded-md px-3 py-1 text-muted-foreground w-48 sm:w-72">
                   <Search className="w-3 h-3" />
-                  <span className="text-[10px] flex-1">Search or type a command...</span>
+                  <span className="text-[10px] flex-1 truncate">Search merchant M_101 or transaction TX_9941...</span>
                   <kbd className="bg-secondary px-1.5 py-0.5 rounded text-[9px] font-mono border border-border">⌘K</kbd>
                 </div>
 
                 {/* Right Profile & Actions */}
                 <div className="flex items-center space-x-3">
-                  <span className="bg-accent/10 text-accent font-medium px-2.5 py-0.5 rounded-full text-[10px]">
-                    Move Money
+                  <span className="bg-accent/10 text-accent font-medium px-2.5 py-0.5 rounded-full text-[10px] flex items-center space-x-1">
+                    <Activity className="w-3 h-3 mr-1" /> Live Risk Stream
                   </span>
                   <Bell className="w-3.5 h-3.5 text-muted-foreground" />
-                  <div className="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center text-[10px] font-medium">
-                    JB
+                  <div className="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center text-[10px] font-medium font-mono">
+                    RS
                   </div>
                 </div>
               </div>
@@ -158,33 +158,33 @@ export default function Hero() {
                 <div className="w-40 border-r border-border p-3 space-y-4 bg-secondary/20 hidden sm:block">
                   <div className="space-y-1">
                     <div className="flex items-center justify-between px-2 py-1.5 bg-secondary text-foreground font-medium rounded-md">
-                      <span>Home</span>
+                      <span>Operations</span>
                     </div>
                     <div className="flex items-center justify-between px-2 py-1.5 text-muted-foreground rounded-md">
-                      <span>Tasks</span>
-                      <span className="bg-accent text-accent-foreground text-[9px] px-1.5 py-0.2 rounded-full font-semibold">10</span>
+                      <span>Risk Signals</span>
+                      <span className="bg-emerald-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-semibold">LIVE</span>
                     </div>
-                    <div className="px-2 py-1.5 text-muted-foreground">Transactions</div>
+                    <div className="px-2 py-1.5 text-muted-foreground">Incident Stream</div>
                     <div className="flex items-center justify-between px-2 py-1.5 text-muted-foreground">
-                      <span>Payments</span>
+                      <span>Scenarios</span>
                       <ChevronDown className="w-3 h-3" />
                     </div>
-                    <div className="px-2 py-1.5 text-muted-foreground">Cards</div>
-                    <div className="px-2 py-1.5 text-muted-foreground">Capital</div>
+                    <div className="px-2 py-1.5 text-muted-foreground">Merchant State</div>
+                    <div className="px-2 py-1.5 text-muted-foreground">Temporal Spike</div>
                     <div className="flex items-center justify-between px-2 py-1.5 text-muted-foreground">
-                      <span>Accounts</span>
+                      <span>Campaign Mode</span>
                       <ChevronDown className="w-3 h-3" />
                     </div>
                   </div>
 
                   <div className="pt-2 border-t border-border space-y-1">
                     <div className="text-[10px] font-semibold text-muted-foreground px-2 uppercase tracking-wider mb-1">
-                      Workflows
+                      Engine Layers
                     </div>
-                    <div className="px-2 py-1 text-muted-foreground">Track routes</div>
-                    <div className="px-2 py-1 text-muted-foreground">Payments</div>
-                    <div className="px-2 py-1 text-muted-foreground">Notifications</div>
-                    <div className="px-2 py-1 text-muted-foreground">Settings</div>
+                    <div className="px-2 py-1 text-muted-foreground">XGBoost Model</div>
+                    <div className="px-2 py-1 text-muted-foreground">Isotonic Calibration</div>
+                    <div className="px-2 py-1 text-muted-foreground">Persistence (N=2)</div>
+                    <div className="px-2 py-1 text-muted-foreground">NVIDIA SLM</div>
                   </div>
                 </div>
 
@@ -193,48 +193,48 @@ export default function Hero() {
                   
                   {/* Greeting */}
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-foreground">Welcome, Jane</h3>
-                    <span className="text-muted-foreground text-[10px]">Updated just now</span>
+                    <h3 className="text-sm font-semibold text-foreground">Merchant Operations Console</h3>
+                    <span className="text-muted-foreground text-[10px] font-mono">Backend: CONNECTED • 4 ms</span>
                   </div>
 
                   {/* Action Buttons Row */}
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full font-medium text-[10px]">Send</span>
-                    <span className="bg-background border border-border text-foreground px-3 py-1 rounded-full font-medium text-[10px]">Request</span>
-                    <span className="bg-background border border-border text-foreground px-3 py-1 rounded-full font-medium text-[10px]">Transfer</span>
-                    <span className="bg-background border border-border text-foreground px-3 py-1 rounded-full font-medium text-[10px]">Deposit</span>
-                    <span className="bg-background border border-border text-foreground px-3 py-1 rounded-full font-medium text-[10px]">Pay Bill</span>
-                    <span className="bg-background border border-border text-foreground px-3 py-1 rounded-full font-medium text-[10px]">Create Invoice</span>
-                    <span className="text-muted-foreground hover:text-foreground text-[10px] ml-auto cursor-pointer">+ Customize</span>
+                    <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full font-medium text-[10px]">Evaluate Txn</span>
+                    <span className="bg-background border border-border text-foreground px-3 py-1 rounded-full font-medium text-[10px]">Replay Scenario</span>
+                    <span className="bg-background border border-border text-foreground px-3 py-1 rounded-full font-medium text-[10px]">Flash Sale Mode</span>
+                    <span className="bg-background border border-border text-foreground px-3 py-1 rounded-full font-medium text-[10px]">Reset State</span>
+                    <span className="bg-background border border-border text-foreground px-3 py-1 rounded-full font-medium text-[10px]">Incident Alert</span>
+                    <span className="bg-background border border-border text-foreground px-3 py-1 rounded-full font-medium text-[10px]">Export Audit</span>
+                    <span className="text-muted-foreground hover:text-foreground text-[10px] ml-auto cursor-pointer font-mono">● Live Sync</span>
                   </div>
 
                   {/* Two Cards Side by Side */}
                   <div className="flex flex-col md:flex-row gap-3">
                     
-                    {/* Balance Card */}
+                    {/* Fraud Excess Card */}
                     <div className="flex-1 basis-0 bg-background border border-border rounded-xl p-3.5 space-y-2 shadow-sm">
                       <div className="flex items-center justify-between text-muted-foreground">
                         <div className="flex items-center space-x-1.5">
-                          <span className="font-medium text-foreground">Mercury Balance</span>
+                          <span className="font-medium text-foreground">Merchant Fraud Excess Ratio</span>
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 fill-emerald-100" />
                         </div>
-                        <span className="text-[10px]">Last 30 Days</span>
+                        <span className="text-[10px] font-mono">Last 15 Mins</span>
                       </div>
 
                       <div className="text-xl font-bold text-foreground font-mono">
-                        $8,450,190<span className="text-xs text-muted-foreground font-normal">.32</span>
+                        1.33x <span className="text-xs text-muted-foreground font-normal">(Base Fraud: 0.12%)</span>
                       </div>
 
-                      <div className="flex items-center space-x-3 text-[10px]">
+                      <div className="flex items-center space-x-3 text-[10px] font-mono">
                         <span className="text-emerald-600 font-medium flex items-center">
-                          <ArrowUpRight className="w-3 h-3 mr-0.5" /> +$1.8M
+                          <ArrowUpRight className="w-3 h-3 mr-0.5" /> +4.0x Velocity
                         </span>
-                        <span className="text-rose-500 font-medium flex items-center">
-                          <ArrowDownLeft className="w-3 h-3 mr-0.5" /> -$900K
+                        <span className="text-slate-500 font-medium flex items-center">
+                          0 Anomaly Windows
                         </span>
                       </div>
 
-                      {/* SVG Area Chart (h-20 cubic Bézier) */}
+                      {/* SVG Area Chart (h-16 cubic Bézier) */}
                       <div className="pt-1">
                         <svg className="w-full h-16" viewBox="0 0 300 80" preserveAspectRatio="none">
                           <defs>
@@ -258,10 +258,10 @@ export default function Hero() {
                       </div>
                     </div>
 
-                    {/* Accounts Card */}
+                    {/* Engine Layers Card */}
                     <div className="flex-1 basis-0 bg-background border border-border rounded-xl p-3.5 space-y-3 shadow-sm">
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-foreground">Accounts</span>
+                        <span className="font-semibold text-foreground">Risk Engine Layers</span>
                         <div className="flex items-center space-x-1.5 text-muted-foreground">
                           <Plus className="w-3.5 h-3.5 cursor-pointer" />
                           <Settings className="w-3.5 h-3.5 cursor-pointer" />
@@ -269,28 +269,28 @@ export default function Hero() {
                       </div>
 
                       <div className="divide-y divide-transparent">
-                        <div className="py-2.5 flex items-center justify-between text-xs">
+                        <div className="py-2 flex items-center justify-between text-xs">
                           <div className="flex items-center space-x-2">
-                            <CreditCard className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="font-medium text-foreground">Credit</span>
+                            <Shield className="w-3.5 h-3.5 text-accent" />
+                            <span className="font-medium text-foreground">Isotonic XGBoost</span>
                           </div>
-                          <span className="font-mono text-foreground">$98,125.50</span>
+                          <span className="font-mono text-emerald-600 font-semibold">P(fraud) 0.3%</span>
                         </div>
 
-                        <div className="py-2.5 flex items-center justify-between text-xs">
+                        <div className="py-2 flex items-center justify-between text-xs">
                           <div className="flex items-center space-x-2">
-                            <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="font-medium text-foreground">Treasury</span>
+                            <Layers className="w-3.5 h-3.5 text-accent" />
+                            <span className="font-medium text-foreground">15m Temporal Spike</span>
                           </div>
-                          <span className="font-mono text-foreground">$6,750,200.00</span>
+                          <span className="font-mono text-emerald-600 font-semibold">P(spike) 0.0%</span>
                         </div>
 
-                        <div className="py-2.5 flex items-center justify-between text-xs">
+                        <div className="py-2 flex items-center justify-between text-xs">
                           <div className="flex items-center space-x-2">
-                            <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="font-medium text-foreground">Operations</span>
+                            <Cpu className="w-3.5 h-3.5 text-accent" />
+                            <span className="font-medium text-foreground">Zero-Shot NVIDIA SLM</span>
                           </div>
-                          <span className="font-mono text-foreground">$1,592,864.82</span>
+                          <span className="font-mono text-foreground font-semibold">Grounding 100%</span>
                         </div>
                       </div>
                     </div>
@@ -299,42 +299,47 @@ export default function Hero() {
 
                   {/* Transactions Table */}
                   <div className="bg-background border border-border rounded-xl p-3.5 space-y-2 shadow-sm">
-                    <h4 className="font-semibold text-xs text-foreground">Recent Transactions</h4>
+                    <h4 className="font-semibold text-xs text-foreground">Live Analyzed Transactions</h4>
                     <div className="w-full text-[10px]">
-                      <div className="grid grid-cols-4 pb-1 text-muted-foreground font-medium border-b border-border">
+                      <div className="grid grid-cols-5 pb-1 text-muted-foreground font-medium border-b border-border font-mono">
                         <span>Date</span>
-                        <span>Description</span>
+                        <span>Merchant</span>
+                        <span>Txn ID</span>
                         <span>Amount</span>
-                        <span className="text-right">Status</span>
+                        <span className="text-right">Decision</span>
                       </div>
 
-                      <div className="divide-y divide-border/40">
-                        <div className="grid grid-cols-4 py-1.5 items-center">
+                      <div className="divide-y divide-border/40 font-mono">
+                        <div className="grid grid-cols-5 py-1.5 items-center">
                           <span className="text-muted-foreground">Mar 19</span>
-                          <span className="font-medium text-foreground">AWS Services</span>
-                          <span className="font-mono text-foreground">-$5,200.00</span>
-                          <span className="text-right font-medium text-amber-600 bg-amber-50 rounded px-1.5 py-0.5 w-max ml-auto">Pending</span>
+                          <span className="font-medium text-foreground">M_101</span>
+                          <span className="text-muted-foreground">TX_100001</span>
+                          <span className="text-foreground">$45.50</span>
+                          <span className="text-right font-medium text-emerald-600 bg-emerald-50 rounded px-1.5 py-0.5 w-max ml-auto">APPROVE</span>
                         </div>
 
-                        <div className="grid grid-cols-4 py-1.5 items-center">
+                        <div className="grid grid-cols-5 py-1.5 items-center">
                           <span className="text-muted-foreground">Mar 18</span>
-                          <span className="font-medium text-foreground">Client Payment</span>
-                          <span className="font-mono text-emerald-600">+$125,000.00</span>
-                          <span className="text-right font-medium text-emerald-600 bg-emerald-50 rounded px-1.5 py-0.5 w-max ml-auto">Completed</span>
+                          <span className="font-medium text-foreground">M_102</span>
+                          <span className="text-muted-foreground">TX_100002</span>
+                          <span className="text-foreground">$4,850.00</span>
+                          <span className="text-right font-medium text-amber-600 bg-amber-50 rounded px-1.5 py-0.5 w-max ml-auto">VERIFY</span>
                         </div>
 
-                        <div className="grid grid-cols-4 py-1.5 items-center">
+                        <div className="grid grid-cols-5 py-1.5 items-center">
                           <span className="text-muted-foreground">Mar 17</span>
-                          <span className="font-medium text-foreground">Global Payroll</span>
-                          <span className="font-mono text-foreground">-$85,450.00</span>
-                          <span className="text-right font-medium text-emerald-600 bg-emerald-50 rounded px-1.5 py-0.5 w-max ml-auto">Completed</span>
+                          <span className="font-medium text-foreground">M_103</span>
+                          <span className="text-muted-foreground">TX_100003</span>
+                          <span className="text-foreground">$950.00</span>
+                          <span className="text-right font-medium text-rose-600 bg-rose-50 rounded px-1.5 py-0.5 w-max ml-auto">ALERT</span>
                         </div>
 
-                        <div className="grid grid-cols-4 py-1.5 items-center">
+                        <div className="grid grid-cols-5 py-1.5 items-center">
                           <span className="text-muted-foreground">Mar 16</span>
-                          <span className="font-medium text-foreground">Office Supplies</span>
-                          <span className="font-mono text-foreground">-$1,200.00</span>
-                          <span className="text-right font-medium text-emerald-600 bg-emerald-50 rounded px-1.5 py-0.5 w-max ml-auto">Completed</span>
+                          <span className="font-medium text-foreground">M_104</span>
+                          <span className="text-muted-foreground">TX_100004</span>
+                          <span className="text-foreground">$29.99</span>
+                          <span className="text-right font-medium text-emerald-600 bg-emerald-50 rounded px-1.5 py-0.5 w-max ml-auto">APPROVE</span>
                         </div>
                       </div>
                     </div>
